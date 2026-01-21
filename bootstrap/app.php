@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         //
     })
+    ->withProviders([
+        \App\Providers\AuthServiceProvider::class,
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
