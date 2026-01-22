@@ -232,7 +232,7 @@ import {
 } from "../../icons";
 import SidebarWidget from "./SidebarWidget.vue";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
-import { useSidebar } from "@/composables/useSidebar";
+import { useSidebar } from "@/Composables/useSidebar";
 
 const route = useRoute();
 
