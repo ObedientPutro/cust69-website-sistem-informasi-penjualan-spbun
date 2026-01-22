@@ -63,14 +63,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['can:access-owner'])->group(function () {
         // --- USERS (OPERATOR MANAGEMENT) ---
         Route::resource('/users', UserController::class)
-            ->except(['show'])
+            ->except(['show', 'destroy'])
             ->names([
                 'index'   => 'users.index',
                 'create'  => 'users.new',
                 'store'   => 'users.save',
                 'edit'    => 'users.modify',
                 'update'  => 'users.update',
-                'destroy' => 'users.delete',
             ]);
 
         // --- MASTER DATA: PRODUCTS (BBM) ---

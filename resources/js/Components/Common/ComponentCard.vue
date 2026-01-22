@@ -1,3 +1,13 @@
+<script setup lang="ts">
+interface Props {
+    title: string
+    className?: string
+    desc?: string
+}
+
+defineProps<Props>()
+</script>
+
 <template>
   <div
     :class="[
@@ -23,15 +33,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { defineProps } from 'vue'
-
-interface Props {
-  title: string
-  className?: string
-  desc?: string
-}
-
-defineProps<Props>()
-</script>

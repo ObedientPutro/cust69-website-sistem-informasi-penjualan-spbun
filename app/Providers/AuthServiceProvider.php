@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Enums\RoleEnum;
+use App\Enums\UserRoleEnum;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,18 +23,18 @@ class AuthServiceProvider extends ServiceProvider
     {
         // Gate: IS OWNER (Super Admin)
         Gate::define('access-owner', function (User $user) {
-            return $user->role === RoleEnum::OWNER;
+            return $user->role === UserRoleEnum::OWNER;
         });
 
         // Gate: IS OPERATOR
         Gate::define('access-operator', function (User $user) {
-            return $user->role === RoleEnum::OPERATOR;
+            return $user->role === UserRoleEnum::OPERATOR;
         });
 
         // Gate: General Access (Bisa login ke dashboard)
         // Berguna jika nanti ada user 'inactive'
         Gate::define('access-dashboard', function (User $user) {
-            return in_array($user->role, [RoleEnum::OWNER, RoleEnum::OPERATOR]);
+            return in_array($user->role, [UserRoleEnum::OWNER, UserRoleEnum::OPERATOR]);
         });
     }
 }

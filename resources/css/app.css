@@ -2,7 +2,6 @@
 layer(base);
 
 @import 'tailwindcss';
-
 @plugin "@tailwindcss/forms";
 
 @custom-variant dark (&:is(.dark *));
@@ -162,6 +161,8 @@ layer(base);
     --z-index-9999: 9999;
     --z-index-99999: 99999;
     --z-index-999999: 999999;
+
+    --font-sans: 'Outfit', sans-serif;
 }
 
 /*
@@ -186,7 +187,7 @@ layer(base);
         cursor: pointer;
     }
     body {
-        @apply relative font-normal font-outfit z-1 bg-gray-50;
+        @apply font-sans text-base text-gray-700 bg-gray-50 dark:bg-gray-900 dark:text-gray-300 transition-colors duration-300;
     }
 }
 

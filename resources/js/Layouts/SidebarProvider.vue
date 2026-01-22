@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebarProvider } from '@/composables/useSidebar'
+import { useSidebarProvider } from '@/Composables/useSidebar'
 
 useSidebarProvider()
 </script>

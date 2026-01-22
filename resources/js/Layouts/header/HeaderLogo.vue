@@ -1,10 +1,10 @@
+<script setup>
+import { Link } from '@inertiajs/vue3'
+</script>
+
 <template>
-  <router-link to="/" class="lg:hidden">
+  <Link to="/" class="lg:hidden">
     <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" />
     <img class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" />
-  </router-link>
+  </Link>
 </template>
-
-<script setup>
-import { RouterLink } from 'vue-router'
-</script>

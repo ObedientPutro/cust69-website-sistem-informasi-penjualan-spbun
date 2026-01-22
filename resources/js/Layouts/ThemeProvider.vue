@@ -1,7 +1,3 @@
-<template>
-  <slot></slot>
-</template>
-
 <script setup lang="ts">
 import { ref, provide, onMounted, watch, computed } from 'vue'
 
@@ -52,3 +48,7 @@ export function useTheme() {
   return theme
 }
 </script>
+
+<template>
+    <slot></slot>
+</template>

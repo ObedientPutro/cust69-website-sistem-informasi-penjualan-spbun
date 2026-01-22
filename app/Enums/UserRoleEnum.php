@@ -2,15 +2,17 @@
 
 namespace App\Enums;
 
-enum RoleEnum : string
+enum UserRoleEnum : string
 {
     case OWNER = 'owner';
+    case ADMIN = 'admin';
     case OPERATOR = 'operator';
 
     public function getLabel(): string
     {
         return match ($this) {
             self::OWNER => 'Super Admin (Owner)',
+            self::ADMIN => 'Head Staff (Admin)',
             self::OPERATOR => 'Operator (Staff)',
         };
     }

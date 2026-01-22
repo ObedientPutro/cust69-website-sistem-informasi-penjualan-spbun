@@ -1,3 +1,133 @@
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Link } from '@inertiajs/vue3'
+
+const dropdownOpen = ref(false)
+const notifying = ref(true)
+const dropdownRef = ref(null)
+
+const notifications = ref([
+    {
+        id: 1,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-02.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'online',
+    },
+    {
+        id: 2,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-03.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'offline',
+    },
+    {
+        id: 3,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-04.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'online',
+    },
+    {
+        id: 4,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-05.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'online',
+    },
+    {
+        id: 5,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-06.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'offline',
+    },
+    {
+        id: 6,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-07.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'online',
+    },
+    {
+        id: 7,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-08.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'online',
+    },
+    {
+        id: 7,
+        userName: 'Terry Franci',
+        userImage: '/images/user/user-09.jpg',
+        action: 'requests permission to change',
+        project: 'Project - Nganter App',
+        type: 'Project',
+        time: '5 min ago',
+        status: 'online',
+    },
+    // Add more notifications here...
+])
+
+const toggleDropdown = () => {
+    dropdownOpen.value = !dropdownOpen.value
+    notifying.value = false
+}
+
+const closeDropdown = () => {
+    dropdownOpen.value = false
+}
+
+const handleClickOutside = (event) => {
+    if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+        closeDropdown()
+    }
+}
+
+const handleItemClick = (event) => {
+    event.preventDefault()
+    // Handle the item click action here
+    console.log('Notification item clicked')
+    closeDropdown()
+}
+
+const handleViewAllClick = (event) => {
+    event.preventDefault()
+    // Handle the "View All Notification" action here
+    console.log('View All Notifications clicked')
+    closeDropdown()
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+</script>
+
 <template>
   <div class="relative" ref="dropdownRef">
     <button
@@ -93,144 +223,14 @@
         </li>
       </ul>
 
-      <router-link
-        to="#"
+      <Link
+        href="#"
         class="mt-3 flex justify-center rounded-lg border border-gray-300 bg-white p-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
         @click="handleViewAllClick"
       >
         View All Notification
-      </router-link>
+      </Link>
     </div>
     <!-- Dropdown End -->
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterLink } from 'vue-router'
-
-const dropdownOpen = ref(false)
-const notifying = ref(true)
-const dropdownRef = ref(null)
-
-const notifications = ref([
-  {
-    id: 1,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-02.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 2,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-03.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'offline',
-  },
-  {
-    id: 3,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-04.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 4,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-05.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 5,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-06.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'offline',
-  },
-  {
-    id: 6,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-07.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 7,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-08.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 7,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-09.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  // Add more notifications here...
-])
-
-const toggleDropdown = () => {
-  dropdownOpen.value = !dropdownOpen.value
-  notifying.value = false
-}
-
-const closeDropdown = () => {
-  dropdownOpen.value = false
-}
-
-const handleClickOutside = (event) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-    closeDropdown()
-  }
-}
-
-const handleItemClick = (event) => {
-  event.preventDefault()
-  // Handle the item click action here
-  console.log('Notification item clicked')
-  closeDropdown()
-}
-
-const handleViewAllClick = (event) => {
-  event.preventDefault()
-  // Handle the "View All Notification" action here
-  console.log('View All Notifications clicked')
-  closeDropdown()
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
-</script>
