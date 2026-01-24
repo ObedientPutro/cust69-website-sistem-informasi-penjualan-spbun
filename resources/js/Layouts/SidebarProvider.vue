@@ -1,9 +1,9 @@
 <template>
-  <slot></slot>
+    <slot></slot>
 </template>
 
 <script setup lang="ts">
-import { useSidebarProvider } from '@/Composables/useSidebar'
+import { useSidebarProvider } from '@/Composables/useSidebar';
 
-useSidebarProvider()
+useSidebarProvider();
 </script>

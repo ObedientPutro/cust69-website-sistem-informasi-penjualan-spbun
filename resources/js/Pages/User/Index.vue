@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, useForm, router, usePage } from '@inertiajs/vue3';
-import AdminLayout from '@/Layouts/AdminLayout.vue';
-import DataTable from '@/Components/Tables/DataTable.vue';
-import Modal from '@/Components/Ui/Modal.vue';
-import Button from '@/Components/Ui/Button.vue';
-import TextInput from '@/Components/FormElements/TextInput.vue';
-import TextArea from '@/Components/FormElements/TextArea.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
+import TextArea from '@/Components/FormElements/TextArea.vue';
+import TextInput from '@/Components/FormElements/TextInput.vue';
 import ToggleSwitch from '@/Components/FormElements/ToggleSwitch.vue';
-import Badge from '@/Components/Ui/Badge.vue';
+import DataTable from '@/Components/Tables/DataTable.vue';
 import Alert from '@/Components/Ui/Alert.vue';
+import Badge from '@/Components/Ui/Badge.vue';
+import Button from '@/Components/Ui/Button.vue';
+import Modal from '@/Components/Ui/Modal.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps<{
     users: any;
@@ -91,7 +91,7 @@ const submit = () => {
 const deleteUser = (user: any) => {
     swal.confirm(
         'Hapus User?',
-        `Anda yakin ingin menghapus user ${user.name}? Data yang dihapus tidak dapat dikembalikan.`
+        `Anda yakin ingin menghapus user ${user.name}? Data yang dihapus tidak dapat dikembalikan.`,
     ).then((result) => {
         if (result.isConfirmed) {
             router.delete(route('users.delete', user.id), {
@@ -102,12 +102,16 @@ const deleteUser = (user: any) => {
 };
 
 const toggleStatus = (user: any) => {
-    router.patch(route('users.toggle-status', user.id), {}, {
-        preserveScroll: true,
-        onError: () => {
-            swal.toast('Gagal mengubah status', 'error');
-        }
-    });
+    router.patch(
+        route('users.toggle-status', user.id),
+        {},
+        {
+            preserveScroll: true,
+            onError: () => {
+                swal.toast('Gagal mengubah status', 'error');
+            },
+        },
+    );
 };
 </script>
 
@@ -115,7 +119,9 @@ const toggleStatus = (user: any) => {
     <Head title="Manajemen User" />
 
     <AdminLayout>
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div
+            class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">
                     Manajemen User
@@ -135,7 +141,19 @@ const toggleStatus = (user: any) => {
             <template #actions>
                 <Button @click="openCreateModal" size="sm" variant="primary">
                     <template #startIcon>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <svg
+                            class="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 4v16m8-8H4"
+                            />
+                        </svg>
                     </template>
                     Tambah User
                 </Button>
@@ -143,11 +161,15 @@ const toggleStatus = (user: any) => {
 
             <template #cell-name="{ row }">
                 <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-brand-500/10 text-brand-500 flex items-center justify-center font-bold text-sm">
+                    <div
+                        class="bg-brand-500/10 text-brand-500 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-bold"
+                    >
                         {{ row.name.charAt(0).toUpperCase() }}
                     </div>
                     <div>
-                        <p class="font-medium text-gray-800 dark:text-white">{{ row.name }}</p>
+                        <p class="font-medium text-gray-800 dark:text-white">
+                            {{ row.name }}
+                        </p>
                         <p class="text-xs text-gray-500">{{ row.email }}</p>
                     </div>
                 </div>
@@ -155,7 +177,13 @@ const toggleStatus = (user: any) => {
 
             <template #cell-role="{ row }">
                 <Badge
-                    :color="row.role === 'admin' ? 'primary' : (row.role === 'owner' ? 'dark' : 'info')"
+                    :color="
+                        row.role === 'admin'
+                            ? 'primary'
+                            : row.role === 'owner'
+                              ? 'dark'
+                              : 'info'
+                    "
                     variant="light"
                     size="sm"
                 >
@@ -164,7 +192,9 @@ const toggleStatus = (user: any) => {
             </template>
 
             <template #cell-nip="{ row }">
-                <span class="text-gray-500 font-mono text-xs">{{ row.nip || '-' }}</span>
+                <span class="font-mono text-xs text-gray-500">{{
+                    row.nip || '-'
+                }}</span>
             </template>
 
             <template #cell-is_active="{ row }">
@@ -179,17 +209,41 @@ const toggleStatus = (user: any) => {
                 <div class="flex items-center justify-end gap-2">
                     <button
                         @click="openEditModal(row)"
-                        class="p-2 text-gray-500 hover:text-brand-500 transition rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                        class="hover:text-brand-500 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-800"
                         title="Edit User"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <svg
+                            class="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                        </svg>
                     </button>
                     <button
                         @click="deleteUser(row)"
-                        class="p-2 text-gray-500 hover:text-error-500 transition rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                        class="hover:text-error-500 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-800"
                         title="Hapus User"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <svg
+                            class="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                        </svg>
                     </button>
                 </div>
             </template>
@@ -202,7 +256,6 @@ const toggleStatus = (user: any) => {
             @close="isModalOpen = false"
         >
             <form @submit.prevent="submit" class="space-y-5">
-
                 <Alert
                     v-if="Object.keys(form.errors).length > 0 && !form.isDirty"
                     variant="error"
@@ -210,8 +263,7 @@ const toggleStatus = (user: any) => {
                     message="Harap lengkapi semua field yang wajib diisi."
                 />
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <div class="col-span-1 md:col-span-2">
                         <TextInput
                             v-model="form.name"
@@ -274,8 +326,14 @@ const toggleStatus = (user: any) => {
                         />
                     </div>
 
-                    <div class="col-span-1 md:col-span-2 border-t border-gray-100 dark:border-gray-700 my-1 pt-2">
-                        <h4 class="text-sm font-semibold text-gray-800 dark:text-white mb-2">Keamanan Akun</h4>
+                    <div
+                        class="col-span-1 my-1 border-t border-gray-100 pt-2 md:col-span-2 dark:border-gray-700"
+                    >
+                        <h4
+                            class="mb-2 text-sm font-semibold text-gray-800 dark:text-white"
+                        >
+                            Keamanan Akun
+                        </h4>
                     </div>
 
                     <div class="col-span-1">
@@ -287,7 +345,7 @@ const toggleStatus = (user: any) => {
                             :error="form.errors.password"
                             :required="!isEditMode"
                         />
-                        <p v-if="isEditMode" class="text-xs text-gray-500 mt-1">
+                        <p v-if="isEditMode" class="mt-1 text-xs text-gray-500">
                             *Isi hanya jika ingin ubah password.
                         </p>
                     </div>
@@ -302,14 +360,13 @@ const toggleStatus = (user: any) => {
                         />
                     </div>
                 </div>
-
             </form>
 
             <template #footer>
                 <button
                     type="button"
                     @click="isModalOpen = false"
-                    class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                    class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                     Batal
                 </button>

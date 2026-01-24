@@ -17,9 +17,9 @@ const props = defineProps<{
             @click="!disabled && (enabled = !enabled)"
             :class="[
                 enabled ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700',
-                disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
             ]"
-            class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            class="focus:ring-brand-500/20 relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:ring-2 focus:outline-none"
         >
             <span class="sr-only">{{ label || 'Toggle Setting' }}</span>
 
@@ -32,13 +32,11 @@ const props = defineProps<{
         <span
             v-if="label"
             @click="!disabled && (enabled = !enabled)"
-            class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-400 cursor-pointer select-none"
+            class="ml-3 cursor-pointer text-sm font-medium text-gray-700 select-none dark:text-gray-400"
         >
             {{ label }}
         </span>
     </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

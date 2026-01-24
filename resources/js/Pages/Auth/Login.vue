@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
 import CommonGridShape from '@/Components/Common/CommonGridShape.vue';
-import TextInput from "@/Components/FormElements/TextInput.vue";
-import PasswordInput from "@/Components/FormElements/PasswordInput.vue";
-import Checkbox from "@/Components/FormElements/Checkbox.vue";
-import Button from "@/Components/Ui/Button.vue";
-import Alert from "@/Components/Ui/Alert.vue";
+import Checkbox from '@/Components/FormElements/Checkbox.vue';
+import PasswordInput from '@/Components/FormElements/PasswordInput.vue';
+import TextInput from '@/Components/FormElements/TextInput.vue';
+import Alert from '@/Components/Ui/Alert.vue';
+import Button from '@/Components/Ui/Button.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineProps<{
     canResetPassword?: boolean;
@@ -38,15 +38,21 @@ const submit = () => {
 <template>
     <Head title="Log in" />
 
-    <div class="flex min-h-screen w-full rounded-2xl bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200">
-        <div class="relative flex w-full flex-col justify-center lg:flex-row dark:bg-gray-900">
-
-            <div class="flex w-full flex-col flex-1 lg:w-1/2">
-
-                <div class="flex flex-col justify-center flex-1 w-full max-w-md mx-auto px-6 sm:px-0 mt-10 lg:mt-0">
+    <div
+        class="flex min-h-screen w-full rounded-2xl bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200"
+    >
+        <div
+            class="relative flex w-full flex-col justify-center lg:flex-row dark:bg-gray-900"
+        >
+            <div class="flex w-full flex-1 flex-col lg:w-1/2">
+                <div
+                    class="mx-auto mt-10 flex w-full max-w-md flex-1 flex-col justify-center px-6 sm:px-0 lg:mt-0"
+                >
                     <div>
                         <div class="mb-5 sm:mb-8">
-                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+                            <h1
+                                class="text-title-sm sm:text-title-md mb-2 font-semibold text-gray-800 dark:text-white/90"
+                            >
                                 Sign In
                             </h1>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -99,13 +105,17 @@ const submit = () => {
                                     <Link
                                         v-if="canResetPassword"
                                         :href="route('password.request')"
-                                        class="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                                        class="text-brand-500 hover:text-brand-600 dark:text-brand-400 text-sm"
                                     >
                                         Lupa password?
                                     </Link>
                                 </div>
 
-                                <Button variant="primary" :processing="form.processing" className="w-full">
+                                <Button
+                                    variant="primary"
+                                    :processing="form.processing"
+                                    className="w-full"
+                                >
                                     Sign In
                                 </Button>
                             </div>
@@ -114,15 +124,26 @@ const submit = () => {
                 </div>
             </div>
 
-            <div class="lg:w-1/2 w-full h-full bg-brand-950 dark:bg-white/5 lg:grid items-center hidden relative">
-                <div class="items-center justify-center flex z-1">
+            <div
+                class="bg-brand-950 relative hidden h-full w-full items-center lg:grid lg:w-1/2 dark:bg-white/5"
+            >
+                <div class="z-1 flex items-center justify-center">
                     <CommonGridShape />
-                    <div class="flex flex-col items-center max-w-xs relative z-10">
-                        <Link :href="route('dashboard')" class="block mb-4">
-                            <img width="{231}" height="{48}" src="/images/logo/auth-logo.svg" alt="Logo" class="h-12 w-auto" />
+                    <div
+                        class="relative z-10 flex max-w-xs flex-col items-center"
+                    >
+                        <Link :href="route('dashboard')" class="mb-4 block">
+                            <img
+                                width="{231}"
+                                height="{48}"
+                                src="/images/logo/auth-logo.svg"
+                                alt="Logo"
+                                class="h-12 w-auto"
+                            />
                         </Link>
-                        <p class="text-gray-400 dark:text-white/60 text-center">
-                            Sistem Manajemen Stok & Penjualan Bahan Bakar Minyak untuk Nelayan
+                        <p class="text-center text-gray-400 dark:text-white/60">
+                            Sistem Manajemen Stok & Penjualan Bahan Bakar Minyak
+                            untuk Nelayan
                         </p>
                     </div>
                 </div>

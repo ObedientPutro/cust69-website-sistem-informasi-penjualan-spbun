@@ -1,10 +1,14 @@
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-  <Link to="/" class="lg:hidden">
-    <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" />
-    <img class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" />
-  </Link>
+    <Link to="/" class="lg:hidden">
+        <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" />
+        <img
+            class="hidden dark:block"
+            src="/images/logo/logo-dark.svg"
+            alt="Logo"
+        />
+    </Link>
 </template>

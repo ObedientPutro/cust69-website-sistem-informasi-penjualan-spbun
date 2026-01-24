@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import CustomerDemographic from '@/Components/Ecommerce/CustomerDemographic.vue';
+import EcommerceMetrics from '@/Components/Ecommerce/EcommerceMetrics.vue';
+import MonthlyTarget from '@/Components/Ecommerce/MonthlySale.vue';
+import MonthlySale from '@/Components/Ecommerce/MonthlyTarget.vue';
+import RecentOrders from '@/Components/Ecommerce/RecentOrders.vue';
+import StatisticsChart from '@/Components/Ecommerce/StatisticsChart.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import AdminLayout from '@/Layouts/AdminLayout.vue'
-import EcommerceMetrics from '@/Components/Ecommerce/EcommerceMetrics.vue'
-import MonthlyTarget from '@/Components/Ecommerce/MonthlySale.vue'
-import MonthlySale from '@/Components/Ecommerce/MonthlyTarget.vue'
-import CustomerDemographic from '@/Components/Ecommerce/CustomerDemographic.vue'
-import StatisticsChart from '@/Components/Ecommerce/StatisticsChart.vue'
-import RecentOrders from '@/Components/Ecommerce/RecentOrders.vue'
 </script>
 
 <template>

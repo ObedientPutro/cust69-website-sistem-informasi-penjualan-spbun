@@ -1,11 +1,11 @@
 <script setup>
-import AppSidebar from '@/Layouts/AppSidebar.vue';
-import AppHeader from '@/Layouts/AppHeader.vue';
-import Backdrop from '@/Layouts/Backdrop.vue';
-import { useSidebarProvider } from '@/Composables/useSidebar';
-const { isExpanded, isHovered } = useSidebarProvider();
 import FlashMessage from '@/Components/Ui/FlashMessage.vue';
-import ThemeProvider from '@/Layouts/ThemeProvider.vue'
+import { useSidebarProvider } from '@/Composables/useSidebar';
+import AppHeader from '@/Layouts/AppHeader.vue';
+import AppSidebar from '@/Layouts/AppSidebar.vue';
+import Backdrop from '@/Layouts/Backdrop.vue';
+import ThemeProvider from '@/Layouts/ThemeProvider.vue';
+const { isExpanded, isHovered } = useSidebarProvider();
 </script>
 
 <template>
@@ -17,10 +17,12 @@ import ThemeProvider from '@/Layouts/ThemeProvider.vue'
             <Backdrop />
             <div
                 class="flex-1 transition-all duration-300 ease-in-out"
-                :class="[isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]']"
+                :class="[
+                    isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]',
+                ]"
             >
                 <app-header />
-                <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+                <div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
                     <slot></slot>
                 </div>
             </div>

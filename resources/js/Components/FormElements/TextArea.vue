@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import InputError from '@/Components/FormElements/InputError.vue';
+import { computed } from 'vue';
 
 const model = defineModel<string>();
 
@@ -14,7 +14,8 @@ const props = defineProps<{
 }>();
 
 const inputClasses = computed(() => {
-    const base = "w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 transition-colors duration-200";
+    const base =
+        'w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 transition-colors duration-200';
 
     if (props.disabled) {
         return `${base} border-gray-300 bg-gray-50 text-gray-500 cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400`;
@@ -30,7 +31,10 @@ const inputClasses = computed(() => {
 
 <template>
     <div class="w-full">
-        <label v-if="label" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+        <label
+            v-if="label"
+            class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400"
+        >
             {{ label }} <span v-if="required" class="text-error-500">*</span>
         </label>
 
@@ -46,6 +50,4 @@ const inputClasses = computed(() => {
     </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

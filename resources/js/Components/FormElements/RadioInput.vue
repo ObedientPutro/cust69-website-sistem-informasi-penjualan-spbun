@@ -14,7 +14,9 @@ const isChecked = () => model.value === props.value;
 </script>
 
 <template>
-    <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer select-none dark:text-gray-400 group">
+    <label
+        class="group flex cursor-pointer items-center text-sm font-medium text-gray-700 select-none dark:text-gray-400"
+    >
         <div class="relative">
             <input
                 type="radio"
@@ -27,14 +29,18 @@ const isChecked = () => model.value === props.value;
 
             <div
                 :class="[
-                    isChecked() ? 'border-brand-500' : 'border-gray-300 dark:border-gray-700',
-                    disabled ? 'opacity-50 cursor-not-allowed' : 'group-hover:border-brand-500'
+                    isChecked()
+                        ? 'border-brand-500'
+                        : 'border-gray-300 dark:border-gray-700',
+                    disabled
+                        ? 'cursor-not-allowed opacity-50'
+                        : 'group-hover:border-brand-500',
                 ]"
                 class="mr-3 flex h-5 w-5 items-center justify-center rounded-full border-[1.25px] bg-transparent transition-colors duration-200"
             >
                 <div
                     :class="isChecked() ? 'scale-100' : 'scale-0'"
-                    class="h-2.5 w-2.5 rounded-full bg-brand-500 transition-transform duration-200"
+                    class="bg-brand-500 h-2.5 w-2.5 rounded-full transition-transform duration-200"
                 ></div>
             </div>
         </div>
@@ -44,6 +50,4 @@ const isChecked = () => model.value === props.value;
     </label>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

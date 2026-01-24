@@ -5,7 +5,10 @@ use App\Http\Controllers\Core\DashboardController;
 use App\Http\Controllers\Core\ProductController;
 use App\Http\Controllers\Core\UserController;
 use App\Http\Controllers\Inventory\InventoryController;
+use App\Http\Controllers\Inventory\InventoryLogController;
 use App\Http\Controllers\Inventory\RestockController;
+use App\Http\Controllers\Inventory\RestockHistoryController;
+use App\Http\Controllers\Inventory\SoundingHistoryController;
 use App\Http\Controllers\Inventory\TankSoundingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Report\ReportController;
@@ -76,6 +79,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'update'  => 'products.update',
                 'destroy' => 'products.delete',
             ]);
+
+        // --- RIWAYAT RESTOCK ---
+        Route::get('/history/restocks', [RestockHistoryController::class, 'index'])->name('restock-history.index');
+        Route::get('/history/restocks/export', [RestockHistoryController::class, 'export'])->name('restock-history.export');
+
+        // --- RIWAYAT SOUNDING (AUDIT) ---
+        Route::get('/history/soundings', [SoundingHistoryController::class, 'index'])->name('sounding-history.index');
+        Route::get('/history/soundings/export', [SoundingHistoryController::class, 'export'])->name('sounding-history.export');
 
         // --- LAPORAN ---
         Route::prefix('reports')->name('reports.')->group(function () {
