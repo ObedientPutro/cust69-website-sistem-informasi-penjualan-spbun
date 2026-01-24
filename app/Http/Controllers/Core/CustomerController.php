@@ -21,15 +21,16 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Customer::query();
-        if ($request->search) {
-            $query->where('name', 'like', "%{$request->search}%")
-                ->orWhere('ship_name', 'like', "%{$request->search}%");
-        }
+        $customers = $this->customerService->getCustomers(
+            search: $request->input('search'),
+            perPage: 10,
+            sortColumn: $request->input('sort', 'created_at'),
+            sortDirection: $request->input('direction', 'desc')
+        );
 
         return Inertia::render('Customer/Index', [
-            'customers' => $query->latest()->paginate(10)->withQueryString(),
-            'filters' => ['search' => $request->search]
+            'customers' => $customers,
+            'filters'   => $request->only(['search', 'sort', 'direction']),
         ]);
     }
 
@@ -38,7 +39,7 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        //
+        redirect(route('dashboard'));
     }
 
     /**
@@ -57,17 +58,17 @@ class CustomerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Customer $customer)
     {
-        //
+        redirect(route('dashboard'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Customer $customer)
     {
-        //
+        redirect(route('dashboard'));
     }
 
     /**
@@ -79,7 +80,7 @@ class CustomerController extends Controller
             $this->customerService->updateCustomer($customer, $request->validated());
             return redirect()->back()->with('success', 'Data Nelayan diperbarui.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memperbarui data nelayan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
         }
     }
 
@@ -90,9 +91,19 @@ class CustomerController extends Controller
     {
         try {
             $this->customerService->deleteCustomer($customer);
-            return redirect()->back()->with('success', 'Data dihapus.');
+            return redirect()->back()->with('success', 'Data Nelayan berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal hapus: Data sedang digunakan.');
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function toggleStatus(Customer $customer)
+    {
+        try {
+            $status = $this->customerService->toggleStatus($customer);
+            return redirect()->back()->with('success', "Pelanggan berhasil {$status}.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal update status: ' . $e->getMessage());
         }
     }
 }

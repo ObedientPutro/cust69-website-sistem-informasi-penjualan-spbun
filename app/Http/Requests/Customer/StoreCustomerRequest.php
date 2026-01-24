@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class StoreCustomerRequest extends FormRequest
 {
@@ -24,10 +26,10 @@ class StoreCustomerRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'ship_name' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'phone' => ['required', 'string', 'max:20', Rule::unique(Customer::class, 'phone')],
+            'ship_name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string', 'max:500'],
+            'credit_limit' => ['required', 'numeric', 'min:0'],
         ];
     }
 }

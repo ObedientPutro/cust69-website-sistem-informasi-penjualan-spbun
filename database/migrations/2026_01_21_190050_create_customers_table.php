@@ -14,11 +14,13 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('phone')->nullable();
-            $table->string('ship_name')->nullable()->comment('Nama Kapal / Kelompok Tani');
-            $table->text('address')->nullable();
-            // Limit Piutang (Opsional, fitur safety kedepan)
+            $table->string('phone');
+            $table->string('ship_name')->comment('Nama Kapal / Kelompok Tani');
+            $table->text('address');
+
+            // Limit Piutang (Default 0 = Tidak boleh hutang sebelum diset)
             $table->decimal('credit_limit', 15, 2)->default(0);
+
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

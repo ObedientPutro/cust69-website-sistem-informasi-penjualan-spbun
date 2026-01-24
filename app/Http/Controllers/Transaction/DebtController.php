@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Core;
+namespace App\Http\Controllers\Transaction;
 
 use App\Enums\PaymentStatusEnum;
 use App\Http\Controllers\Controller;
