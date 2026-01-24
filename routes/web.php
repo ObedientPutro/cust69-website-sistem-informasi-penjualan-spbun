@@ -75,12 +75,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // --- MASTER DATA: PRODUCTS (BBM) ---
         Route::resource('/products', ProductController::class)
-            ->except(['show'])
+            ->except(['show', 'create', 'edit'])
             ->names([
                 'index'   => 'products.index',
-                'create'  => 'products.new',
                 'store'   => 'products.save',
-                'edit'    => 'products.modify',
                 'update'  => 'products.update',
                 'destroy' => 'products.delete',
             ]);

@@ -25,7 +25,6 @@ class Product extends Model
     ];
 
     // --- Relationships ---
-
     public function restocks(): HasMany
     {
         return $this->hasMany(Restock::class);
@@ -39,5 +38,10 @@ class Product extends Model
     public function tankSoundings(): HasMany
     {
         return $this->hasMany(TankSounding::class);
+    }
+
+    public function productPriceHistories(): HasMany
+    {
+        return $this->hasMany(ProductPriceHistory::class);
     }
 }

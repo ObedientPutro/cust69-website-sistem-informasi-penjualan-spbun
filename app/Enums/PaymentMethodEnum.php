@@ -17,11 +17,4 @@ enum PaymentMethodEnum : string
         };
     }
 
-    public static function toArray(): array
-    {
-        return array_map(fn($case) => [
-            'id' => $case->value,
-            'name' => $case->getLabel(),
-        ], self::cases());
-    }
 }

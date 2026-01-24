@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ProductPriceHistoryTypeEnum;
+use App\Enums\UserRoleEnum;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -43,6 +45,10 @@ class HandleInertiaRequests extends Middleware
             'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
+            ],
+            'enums' => [
+                'user_roles' => UserRoleEnum::toArray(),
+                'price_history_types' => ProductPriceHistoryTypeEnum::toArray(),
             ],
         ];
     }

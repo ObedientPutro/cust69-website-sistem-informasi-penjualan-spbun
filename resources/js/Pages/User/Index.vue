@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DataTable from '@/Components/Tables/DataTable.vue';
 import Modal from '@/Components/Ui/Modal.vue';
@@ -13,18 +13,20 @@ import Badge from '@/Components/Ui/Badge.vue';
 import Alert from '@/Components/Ui/Alert.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 
-// 1. Props dari Controller (UserService)
 const props = defineProps<{
     users: any;
     filters: any;
 }>();
 
-// 2. State & Setup
+const page = usePage();
+const roleOptions = page.props.enums.user_roles;
+
+console.log(roleOptions);
+
 const swal = useSweetAlert();
 const isModalOpen = ref(false);
 const isEditMode = ref(false);
 
-// Form Handling (Inertia useForm)
 const form = useForm({
     id: null,
     name: '',
@@ -37,18 +39,14 @@ const form = useForm({
     password_confirmation: '',
 });
 
-// Definisi Kolom untuk DataTable
 const columns = [
-    { label: 'User Info', key: 'name', sortable: true, align: 'left' }, // Default Kiri
-    { label: 'Role', key: 'role', sortable: true, align: 'center' },    // Tengah
-    { label: 'NIP', key: 'nip', sortable: true, align: 'left' },        // Kiri
-    { label: 'No. HP', key: 'phone', sortable: false, align: 'left' },  // Kiri
-    { label: 'Status', key: 'is_active', sortable: true, align: 'left' }, // Tengah
+    { label: 'User Info', key: 'name', sortable: true, align: 'left' },
+    { label: 'Role', key: 'role', sortable: true, align: 'center' },
+    { label: 'NIP', key: 'nip', sortable: true, align: 'left' },
+    { label: 'No. HP', key: 'phone', sortable: false, align: 'left' },
+    { label: 'Status', key: 'is_active', sortable: true, align: 'left' },
 ];
 
-// 3. Methods Action
-
-// Reset & Buka Modal Tambah
 const openCreateModal = () => {
     isEditMode.value = false;
     form.reset();
@@ -56,13 +54,11 @@ const openCreateModal = () => {
     isModalOpen.value = true;
 };
 
-// Isi Form & Buka Modal Edit
 const openEditModal = (user: any) => {
     isEditMode.value = true;
     form.reset();
     form.clearErrors();
 
-    // Load data user ke form
     form.id = user.id;
     form.name = user.name;
     form.email = user.email;
@@ -70,19 +66,16 @@ const openEditModal = (user: any) => {
     form.role = user.role;
     form.phone = user.phone;
     form.address = user.address;
-    // Password sengaja dikosongkan (diisi hanya jika ingin ubah)
 
     isModalOpen.value = true;
 };
 
-// Handle Submit (Create / Update)
 const submit = () => {
     if (isEditMode.value) {
         form.put(route('users.update', form.id), {
             onSuccess: () => {
                 isModalOpen.value = false;
                 form.reset();
-                // Flash Message otomatis muncul via Global Watcher
             },
         });
     } else {
@@ -95,7 +88,6 @@ const submit = () => {
     }
 };
 
-// Handle Delete dengan SweetAlert
 const deleteUser = (user: any) => {
     swal.confirm(
         'Hapus User?',
@@ -109,13 +101,10 @@ const deleteUser = (user: any) => {
     });
 };
 
-// Handle Toggle Status Aktif/Non-aktif
 const toggleStatus = (user: any) => {
-    // Optimistic UI update (opsional) atau tunggu server
     router.patch(route('users.toggle-status', user.id), {}, {
         preserveScroll: true,
         onError: () => {
-            // Revert jika gagal (biasanya handled by Inertia reload, tapi bisa tambah logic di sini)
             swal.toast('Gagal mengubah status', 'error');
         }
     });
@@ -258,11 +247,7 @@ const toggleStatus = (user: any) => {
                         <SelectInput
                             v-model="form.role"
                             label="Jabatan / Role"
-                            :options="[
-                                { value: 'operator', label: 'Operator Lapangan' },
-                                { value: 'admin', label: 'Staff Admin' },
-                                { value: 'owner', label: 'Owner (Pemilik)' }
-                            ]"
+                            :options="roleOptions"
                             :error="form.errors.role"
                             required
                         />

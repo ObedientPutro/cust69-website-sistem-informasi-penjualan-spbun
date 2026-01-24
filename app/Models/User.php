@@ -56,7 +56,6 @@ class User extends Authenticatable
     }
 
     // --- Helper Methods ---
-
     public function isOwner(): bool
     {
         return $this->role === UserRoleEnum::OWNER;
@@ -64,7 +63,6 @@ class User extends Authenticatable
 
 
     // --- Relationships ---
-
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
@@ -73,5 +71,10 @@ class User extends Authenticatable
     public function restocks(): HasMany
     {
         return $this->hasMany(Restock::class);
+    }
+
+    public function productPriceHistories(): HasMany
+    {
+        return $this->hasMany(ProductPriceHistory::class);
     }
 }

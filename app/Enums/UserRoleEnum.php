@@ -2,8 +2,12 @@
 
 namespace App\Enums;
 
+use App\Traits\EnumHelper;
+
 enum UserRoleEnum : string
 {
+    use EnumHelper;
+
     case OWNER = 'owner';
     case ADMIN = 'admin';
     case OPERATOR = 'operator';
@@ -11,17 +15,10 @@ enum UserRoleEnum : string
     public function getLabel(): string
     {
         return match ($this) {
-            self::OWNER => 'Super Admin (Owner)',
-            self::ADMIN => 'Head Staff (Admin)',
-            self::OPERATOR => 'Operator (Staff)',
+            self::OWNER => 'Owner (Pemilik)',
+            self::ADMIN => 'Staff Admin',
+            self::OPERATOR => 'Operator Lapangan',
         };
     }
 
-    public static function toArray(): array
-    {
-        return array_map(fn($case) => [
-            'id' => $case->value,
-            'name' => $case->getLabel(),
-        ], self::cases());
-    }
 }
