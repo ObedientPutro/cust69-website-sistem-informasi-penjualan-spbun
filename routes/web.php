@@ -4,6 +4,7 @@ use App\Http\Controllers\Core\CustomerController;
 use App\Http\Controllers\Core\DashboardController;
 use App\Http\Controllers\Core\ProductController;
 use App\Http\Controllers\Core\UserController;
+use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\Inventory\RestockController;
 use App\Http\Controllers\Inventory\TankSoundingController;
 use App\Http\Controllers\ProfileController;
@@ -46,16 +47,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'destroy' => 'customers.delete',
         ]);
 
-    // --- INVENTORY: TANK SOUNDING (STOK OPNAME) ---
-    // Tank Sounding (Operator wajib lapor stok fisik harian)
-    // Hanya Create & Store. Index boleh lihat history sendiri.
-    Route::resource('/tank-soundings', TankSoundingController::class)
-        ->except(['show', 'edit', 'update', 'destroy'])
-        ->names([
-            'index'   => 'soundings.index',
-            'create'  => 'soundings.new',
-            'store'   => 'soundings.save',
-        ]);
+    // Inventory Routes
+    Route::post('/inventory/restock', [InventoryController::class, 'storeRestock'])->name('inventory.restock');
+    Route::post('/inventory/sounding', [InventoryController::class, 'storeSounding'])->name('inventory.sounding');
 
     // =====================================================================
     // GROUP 2: OWNER ONLY (SUPER ADMIN)
@@ -83,28 +77,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'destroy' => 'products.delete',
             ]);
 
-        // --- INVENTORY: RESTOCK (DO MASUK) ---
-        Route::resource('/restocks', RestockController::class)
-            ->except(['show'])
-            ->names([
-                'index'   => 'restocks.index',
-                'create'  => 'restocks.new',
-                'store'   => 'restocks.save',
-                'edit'    => 'restocks.modify',
-                'update'  => 'restocks.update',
-                'destroy' => 'restocks.delete',
-            ]);
-
         // --- LAPORAN ---
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
             Route::get('/export-pdf', [ReportController::class, 'exportPdf'])->name('export.pdf');
             Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export.excel');
         });
-
-        // Hapus Stok Opname (Jika operator salah input parah)
-        Route::delete('/tank-soundings/{tank_sounding}', [TankSoundingController::class, 'destroy'])
-            ->name('soundings.delete');
 
         // CRUD Transaksi (Edit & Hapus & Update Backdate)
         Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])->name('transactions.modify');
