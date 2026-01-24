@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\UserRoleEnum;
+use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 

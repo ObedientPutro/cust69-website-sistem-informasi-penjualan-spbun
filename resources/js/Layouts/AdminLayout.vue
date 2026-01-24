@@ -4,11 +4,14 @@ import AppHeader from '@/Layouts/AppHeader.vue';
 import Backdrop from '@/Layouts/Backdrop.vue';
 import { useSidebarProvider } from '@/Composables/useSidebar';
 const { isExpanded, isHovered } = useSidebarProvider();
+import FlashMessage from '@/Components/Ui/FlashMessage.vue';
 import ThemeProvider from '@/Layouts/ThemeProvider.vue'
 </script>
 
 <template>
     <ThemeProvider>
+        <FlashMessage />
+
         <div class="min-h-screen xl:flex">
             <app-sidebar />
             <Backdrop />

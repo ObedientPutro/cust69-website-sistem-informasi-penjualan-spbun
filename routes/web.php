@@ -63,14 +63,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['can:access-owner'])->group(function () {
         // --- USERS (OPERATOR MANAGEMENT) ---
         Route::resource('/users', UserController::class)
-            ->except(['show', 'destroy'])
+            ->except(['show', 'create', 'edit'])
             ->names([
                 'index'   => 'users.index',
-                'create'  => 'users.new',
                 'store'   => 'users.save',
-                'edit'    => 'users.modify',
                 'update'  => 'users.update',
+                'destroy' => 'users.delete',
             ]);
+        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
+            ->name('users.toggle-status');
 
         // --- MASTER DATA: PRODUCTS (BBM) ---
         Route::resource('/products', ProductController::class)
