@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Core\CustomerController;
 use App\Http\Controllers\Core\DashboardController;
+use App\Http\Controllers\Core\DebtController;
 use App\Http\Controllers\Core\ProductController;
 use App\Http\Controllers\Core\UserController;
 use App\Http\Controllers\Inventory\InventoryController;
@@ -32,19 +33,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pos', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.save');
 
+    // --- MODUL HUTANG ---
+    Route::get('/debts', [DebtController::class, 'index'])->name('debts.index');
+    Route::post('/debts/{transaction}/repay', [DebtController::class, 'repay'])->name('debts.repay');
+
     // Inventory Routes
     Route::post('/inventory/restock', [InventoryController::class, 'storeRestock'])->name('inventory.restock');
     Route::post('/inventory/sounding', [InventoryController::class, 'storeSounding'])->name('inventory.sounding');
 
-
     // --- MASTER DATA: CUSTOMERS (NELAYAN) ---
     Route::resource('/customers', CustomerController::class)
-        ->except(['show'])
+        ->except(['show', 'edit', 'create'])
         ->names([
             'index'   => 'customers.index',
-            'create'  => 'customers.new',
             'store'   => 'customers.save',
-            'edit'    => 'customers.modify',
             'update'  => 'customers.update',
             'destroy' => 'customers.delete',
         ]);

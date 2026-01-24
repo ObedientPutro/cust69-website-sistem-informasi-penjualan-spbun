@@ -13,7 +13,15 @@ class Customer extends Model
     protected $fillable = [
         'name',
         'phone',
-        'notes',
+        'ship_name',
+        'address',
+        'credit_limit',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'credit_limit' => 'decimal:2'
     ];
 
     public function transactions(): HasMany

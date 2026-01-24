@@ -38,7 +38,7 @@ const menuGroupsRaw = [
                     },
                     {
                         name: 'Transaksi Bon',
-                        path: '/products',
+                        path: '/debts',
                         roles: ['owner'],
                     },
                 ],

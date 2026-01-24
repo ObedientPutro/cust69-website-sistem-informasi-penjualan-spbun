@@ -26,6 +26,8 @@ return new class extends Migration
             $table->string('payment_method');
             $table->string('payment_status');
             $table->string('payment_proof')->nullable()->comment('Path gambar bukti transfer');
+            $table->string('repayment_method')->nullable()->comment('cash/transfer saat bayar hutang');
+            $table->dateTime('paid_at')->nullable()->comment('Waktu pelunasan');
 
             // Total Rupiah
             $table->decimal('grand_total', 15, 2);

@@ -20,6 +20,8 @@ class Transaction extends Model
         'payment_method',
         'payment_status',
         'payment_proof',
+        'repayment_method',
+        'paid_at',
         'grand_total',
         'was_stock_minus',
         'note',
@@ -27,9 +29,11 @@ class Transaction extends Model
 
     protected $casts = [
         'transaction_date' => 'datetime',
+        'paid_at' => 'datetime',
         'grand_total' => 'decimal:2',
         'was_stock_minus' => 'boolean',
         'payment_method' => PaymentMethodEnum::class,
+        'repayment_method' => PaymentMethodEnum::class,
         'payment_status' => PaymentStatusEnum::class,
     ];
 
