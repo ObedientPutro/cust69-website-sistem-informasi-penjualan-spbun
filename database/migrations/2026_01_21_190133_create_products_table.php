@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->comment('Solar, Pertalite, Dexlite');
             $table->string('unit', 50)->default('Liter');
+            $table->boolean('is_active')->default(true);
 
             // Harga Jual (Rupiah)
             $table->decimal('price', 15, 2)->default(0);

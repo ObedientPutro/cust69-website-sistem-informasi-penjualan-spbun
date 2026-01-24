@@ -96,4 +96,15 @@ class ProductController extends Controller
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
+
+    public function toggleStatus(Product $product)
+    {
+        try {
+            $this->productService->toggleStatus($product);
+            $status = $product->is_active ? 'diaktifkan' : 'dinonaktifkan';
+            return redirect()->back()->with('success', "Produk berhasil {$status}.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal update status: ' . $e->getMessage());
+        }
+    }
 }

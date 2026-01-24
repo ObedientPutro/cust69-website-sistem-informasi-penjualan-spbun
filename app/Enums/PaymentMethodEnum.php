@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Traits\EnumHelper;
+
 enum PaymentMethodEnum : string
 {
     case CASH = 'cash';

@@ -3,10 +3,19 @@
 namespace App\Http\Controllers\Transaction;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Transaction\StoreTransactionRequest;
+use App\Models\Customer;
+use App\Models\Product;
+use App\Services\TransactionService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TransactionController extends Controller
 {
+    public function __construct(
+        protected TransactionService $transactionService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -20,15 +29,35 @@ class TransactionController extends Controller
      */
     public function create()
     {
-        //
+        $products = Product::where('is_active', true)
+            ->select('id', 'name', 'price', 'unit', 'stock')
+            ->get();
+
+        $customers = Customer::select('id', 'name')->orderBy('name')->get();
+
+        return Inertia::render('Transaction/Create', [
+            'products' => $products,
+            'customers' => $customers,
+        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreTransactionRequest $request)
     {
-        //
+        try {
+            $this->transactionService->createTransaction(
+                $request->validated(),
+                $request->file('payment_proof')
+            );
+
+            return redirect()->route('transactions.create')
+                ->with('success', 'Transaksi berhasil disimpan!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage());
+        }
     }
 
     /**

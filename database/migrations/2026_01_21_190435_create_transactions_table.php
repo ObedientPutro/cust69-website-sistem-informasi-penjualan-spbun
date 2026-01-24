@@ -24,7 +24,7 @@ return new class extends Migration
 
             // Pembayaran
             $table->string('payment_method');
-            $table->string('payment_status')->default(PaymentStatusEnum::PAID->value);
+            $table->string('payment_status');
             $table->string('payment_proof')->nullable()->comment('Path gambar bukti transfer');
 
             // Total Rupiah

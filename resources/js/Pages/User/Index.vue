@@ -44,7 +44,7 @@ const columns = [
     { label: 'Role', key: 'role', sortable: true, align: 'center' },
     { label: 'NIP', key: 'nip', sortable: true, align: 'left' },
     { label: 'No. HP', key: 'phone', sortable: false, align: 'left' },
-    { label: 'Status', key: 'is_active', sortable: true, align: 'left' },
+    { label: 'Status', key: 'is_active', sortable: true, align: 'center' },
 ];
 
 const openCreateModal = () => {
@@ -198,11 +198,13 @@ const toggleStatus = (user: any) => {
             </template>
 
             <template #cell-is_active="{ row }">
-                <ToggleSwitch
-                    :model-value="Boolean(row.is_active)"
-                    @update:model-value="toggleStatus(row)"
-                    :label="row.is_active ? 'Aktif' : 'Non-Aktif'"
-                />
+                <div class="flex justify-center">
+                    <ToggleSwitch
+                        :model-value="Boolean(row.is_active)"
+                        @update:model-value="toggleStatus(row)"
+                        :label="row.is_active ? 'Aktif' : 'Non-Aktif'"
+                    />
+                </div>
             </template>
 
             <template #actions-row="{ row }">

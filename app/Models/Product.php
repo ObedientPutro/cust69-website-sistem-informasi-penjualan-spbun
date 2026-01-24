@@ -16,12 +16,14 @@ class Product extends Model
         'price',
         'cost_price',
         'stock',
+        'is_active',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'cost_price' => 'decimal:2',
         'stock' => 'decimal:2',
+        'is_active' => 'boolean',
     ];
 
     // --- Relationships ---

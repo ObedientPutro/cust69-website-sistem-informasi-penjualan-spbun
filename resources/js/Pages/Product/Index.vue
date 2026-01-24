@@ -7,9 +7,10 @@ import DataTable from '@/Components/Tables/DataTable.vue';
 import Alert from '@/Components/Ui/Alert.vue';
 import Button from '@/Components/Ui/Button.vue';
 import Modal from '@/Components/Ui/Modal.vue';
+import ToggleSwitch from '@/Components/FormElements/ToggleSwitch.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import {Head, router, useForm} from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{
@@ -59,6 +60,7 @@ const columns = [
     },
     { label: 'Harga Jual', key: 'price', sortable: true, align: 'center' },
     { label: 'Stok Sistem', key: 'stock', sortable: true, align: 'center' },
+    { label: 'Status', key: 'is_active', sortable: true, align: 'center' },
 ];
 
 const formatRupiah = (value: number) => {
@@ -148,6 +150,19 @@ const submitSounding = () => {
             swal.toast('Hasil sounding tercatat!', 'success');
         },
     });
+};
+
+const toggleStatus = (product: any) => {
+    router.patch(
+        route('products.toggle-status', product.id),
+        {},
+        {
+            preserveScroll: true,
+            onError: () => {
+                swal.toast('Gagal mengubah status', 'error');
+            },
+        },
+    );
 };
 </script>
 
@@ -251,6 +266,16 @@ const submitSounding = () => {
                     >
                         Stok Menipis
                     </div>
+                </div>
+            </template>
+
+            <template #cell-is_active="{ row }">
+                <div class="flex justify-center">
+                    <ToggleSwitch
+                        :model-value="Boolean(row.is_active)"
+                        @update:model-value="toggleStatus(row)"
+                        :label="row.is_active ? 'Aktif' : 'Non-Aktif'"
+                    />
                 </div>
             </template>
 

@@ -107,4 +107,15 @@ class ProductService
             throw $e;
         }
     }
+
+    /**
+     * Toggle Status Active/Inactive
+     */
+    public function toggleStatus(Product $product): Product
+    {
+        $product->update([
+            'is_active' => !$product->is_active
+        ]);
+        return $product;
+    }
 }

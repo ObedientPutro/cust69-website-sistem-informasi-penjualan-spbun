@@ -27,10 +27,10 @@ class Transaction extends Model
 
     protected $casts = [
         'transaction_date' => 'datetime',
-        'payment_method' => PaymentMethodEnum::class,
-        'payment_status' => PaymentStatusEnum::class,
         'grand_total' => 'decimal:2',
         'was_stock_minus' => 'boolean',
+        'payment_method' => PaymentMethodEnum::class,
+        'payment_status' => PaymentStatusEnum::class,
     ];
 
     // --- Relationships ---

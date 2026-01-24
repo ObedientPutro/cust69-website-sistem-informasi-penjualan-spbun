@@ -10,7 +10,7 @@ import {
     ListIcon,
     PieChartIcon,
     TableIcon,
-    UserCircleIcon,
+    SendIcon,
 } from '@/Components/Icons';
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
 const page = usePage();
@@ -24,50 +24,66 @@ const menuGroupsRaw = [
                 icon: GridIcon,
                 name: 'Dashboard',
                 path: '/dashboard',
-                roles: ['owner', 'admin', 'operator'],
+                roles: ['owner'],
             },
             {
-                icon: UserCircleIcon,
-                name: 'Kelola User',
-                path: '/users',
+                name: 'Transaksi',
+                icon: SendIcon,
                 roles: ['owner'],
+                subItems: [
+                    {
+                        name: 'POS Kasir',
+                        path: '/pos',
+                        roles: ['owner'],
+                    },
+                    {
+                        name: 'Transaksi Bon',
+                        path: '/products',
+                        roles: ['owner'],
+                    },
+                ],
             },
             {
                 name: 'Master Data',
                 icon: ListIcon,
-                roles: ['owner', 'admin'],
+                roles: ['owner'],
                 subItems: [
+                    {
+                        name: 'Kelola User',
+                        path: '/users',
+                        roles: ['owner'],
+                    },
                     {
                         name: 'Produk BBM',
                         path: '/products',
-                        roles: ['owner', 'admin'],
+                        roles: ['owner'],
                     },
                     {
-                        name: 'Tangki / Stok',
-                        path: '/tanks',
-                        roles: ['owner', 'admin'],
+                        name: 'Kelola Customer',
+                        path: '/customers',
+                        roles: ['owner'],
                     },
                 ],
             },
             {
                 name: 'Riwayat Transaksi',
                 icon: TableIcon,
-                roles: ['owner', 'admin', 'operator'],
+                roles: ['owner'],
                 subItems: [
                     {
                         name: "Mutasi Stock",
                         path: "/history/restocks",
-                        roles: ['owner', 'admin']
+                        roles: ['owner']
                     },
                     {
                         name: "Mutasi Sounding",
                         path: "/history/soundings",
-                        roles: ['owner', 'admin']
+                        roles: ['owner']
                     },
                     {
                         name: 'Mutasi Transaksi',
                         path: '/transactions',
-                        roles: ['owner', 'admin'],
+                        roles: ['owner'],
                     },
                 ],
             },
@@ -80,13 +96,13 @@ const menuGroupsRaw = [
                 icon: PieChartIcon,
                 name: 'Laporan Keuangan',
                 path: '/reports/financial',
-                roles: ['owner', 'admin'],
+                roles: ['owner'],
             },
             {
                 icon: DocsIcon,
                 name: 'Laporan Stok',
                 path: '/reports/stock',
-                roles: ['owner', 'admin'],
+                roles: ['owner'],
             },
         ],
     },

@@ -29,14 +29,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- TRANSAKSI (POS) ---
     // Edit, Update, Destroy (Itu jatah Owner)
-    Route::resource('/transactions', TransactionController::class)
-        ->except(['edit', 'update', 'destroy'])
-        ->names([
-            'index'   => 'transactions.index',
-            'create'  => 'transactions.new',  // HALAMAN KASIR
-            'store'   => 'transactions.save', // PROSES BAYAR
-            'show'    => 'transactions.view', // LIHAT DETAIL/STRUK
-        ]);
+    Route::get('/pos', [TransactionController::class, 'create'])->name('transactions.create');
+    Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.save');
+
+    // Inventory Routes
+    Route::post('/inventory/restock', [InventoryController::class, 'storeRestock'])->name('inventory.restock');
+    Route::post('/inventory/sounding', [InventoryController::class, 'storeSounding'])->name('inventory.sounding');
+
 
     // --- MASTER DATA: CUSTOMERS (NELAYAN) ---
     Route::resource('/customers', CustomerController::class)
@@ -49,10 +48,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'update'  => 'customers.update',
             'destroy' => 'customers.delete',
         ]);
-
-    // Inventory Routes
-    Route::post('/inventory/restock', [InventoryController::class, 'storeRestock'])->name('inventory.restock');
-    Route::post('/inventory/sounding', [InventoryController::class, 'storeSounding'])->name('inventory.sounding');
 
     // =====================================================================
     // GROUP 2: OWNER ONLY (SUPER ADMIN)
@@ -79,6 +74,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'update'  => 'products.update',
                 'destroy' => 'products.delete',
             ]);
+        Route::patch('/products/{product}/toggle', [ProductController::class, 'toggleStatus'])
+            ->name('products.toggle-status');
 
         // --- RIWAYAT RESTOCK ---
         Route::get('/history/restocks', [RestockHistoryController::class, 'index'])->name('restock-history.index');
