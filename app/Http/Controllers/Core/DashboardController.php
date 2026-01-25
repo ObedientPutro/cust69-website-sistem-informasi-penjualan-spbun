@@ -3,23 +3,23 @@
 namespace App\Http\Controllers\Core;
 
 use App\Http\Controllers\Controller;
+use App\Services\DashboardService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     */
-    public function __invoke(Request $request)
+    public function __construct(
+        protected DashboardService $dashboardService
+    ) {}
+
+    public function __invoke()
     {
         return Inertia::render('Dashboard', [
-            'stats' => [
-                'total_sales' => 15000000,
-                'total_orders' => 120,
-                'total_products' => 5,
-                'total_users' => 5,
-            ]
+            'financial' => $this->dashboardService->getFinancialStats(),
+            'inventory' => $this->dashboardService->getStockAnalysis(),
+            'trends'    => $this->dashboardService->getProductSalesTrend(),
+            'lists'     => $this->dashboardService->getTopLists(),
         ]);
     }
 }

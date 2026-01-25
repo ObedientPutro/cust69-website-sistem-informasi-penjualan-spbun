@@ -95,11 +95,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/history/transactions/export', [TransactionHistoryController::class, 'export'])->name('history.transactions.export');
 
         // --- LAPORAN ---
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [ReportController::class, 'index'])->name('index');
-            Route::get('/export-pdf', [ReportController::class, 'exportPdf'])->name('export.pdf');
-            Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export.excel');
-        });
+
 
         // CRUD Transaksi (Edit & Hapus & Update Backdate)
         Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
