@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import InputError from '@/Components/InputError.vue';
+import InputError from '@/Components/FormElements/InputError.vue';
 import { ref } from 'vue';
 
-// Model menerima object File (dari browser) atau null
 const model = defineModel<File | null>();
 
 const props = defineProps<{
     label?: string;
     error?: string;
-    accept?: string; // misal: "image/*"
+    accept?: string;
 }>();
 
 const isDragging = ref(false);
@@ -118,7 +117,7 @@ const handleFiles = (file: File) => {
                     Click to upload or drag and drop
                 </h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    SVG, PNG, JPG or GIF (max, 800x400px)
+                    PNG, JPG or JPEG (max, 5MB)
                 </p>
             </div>
 

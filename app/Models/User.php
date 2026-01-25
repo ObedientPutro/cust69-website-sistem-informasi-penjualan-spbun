@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -28,6 +29,7 @@ class User extends Authenticatable
         'phone',
         'role',
         'is_active',
+        'photo',
     ];
 
     /**
@@ -53,6 +55,16 @@ class User extends Authenticatable
             'birth_date' => 'date',
             'role' => UserRoleEnum::class,
         ];
+    }
+
+    protected $appends = ['photo_url'];
+
+    // Accessor: Mengembalikan URL lengkap atau placeholder
+    public function getPhotoUrlAttribute(): string
+    {
+        return $this->photo
+            ? Storage::url($this->photo)
+            : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
     }
 
     // --- Helper Methods ---

@@ -8,8 +8,10 @@ import Alert from '@/Components/Ui/Alert.vue';
 import Badge from '@/Components/Ui/Badge.vue';
 import Button from '@/Components/Ui/Button.vue';
 import Modal from '@/Components/Ui/Modal.vue';
+import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ImageViewerModal from '@/Components/Ui/ImageViewerModal.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -37,6 +39,8 @@ const form = useForm({
     address: '',
     password: '',
     password_confirmation: '',
+    photo: null as File | null,
+    _method: 'post',
 });
 
 const columns = [
@@ -51,6 +55,7 @@ const openCreateModal = () => {
     isEditMode.value = false;
     form.reset();
     form.clearErrors();
+    form._method = 'post';
     isModalOpen.value = true;
 };
 
@@ -66,13 +71,15 @@ const openEditModal = (user: any) => {
     form.role = user.role;
     form.phone = user.phone;
     form.address = user.address;
+    form.photo = null;
+    form._method = 'put';
 
     isModalOpen.value = true;
 };
 
 const submit = () => {
     if (isEditMode.value) {
-        form.put(route('users.update', form.id), {
+        form.post(route('users.update', form.id), {
             onSuccess: () => {
                 isModalOpen.value = false;
                 form.reset();
@@ -112,6 +119,16 @@ const toggleStatus = (user: any) => {
             },
         },
     );
+};
+
+const isViewerOpen = ref(false);
+const selectedImageUrl = ref<string | null>(null);
+const selectedImageAlt = ref('');
+
+const openImageViewer = (url: string, alt: string) => {
+    selectedImageUrl.value = url;
+    selectedImageAlt.value = alt;
+    isViewerOpen.value = true;
 };
 </script>
 
@@ -161,11 +178,18 @@ const toggleStatus = (user: any) => {
 
             <template #cell-name="{ row }">
                 <div class="flex items-center gap-3">
-                    <div
-                        class="bg-brand-500/10 text-brand-500 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-bold"
+                    <button
+                        @click="openImageViewer(row.photo_url, row.name)"
+                        class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700 transition hover:scale-110 hover:ring-2 hover:ring-brand-500 cursor-zoom-in"
+                        title="Lihat Foto"
                     >
-                        {{ row.name.charAt(0).toUpperCase() }}
-                    </div>
+                        <img
+                            :src="row.photo_url"
+                            :alt="row.name"
+                            class="h-full w-full object-cover"
+                        />
+                    </button>
+
                     <div>
                         <p class="font-medium text-gray-800 dark:text-white">
                             {{ row.name }}
@@ -247,6 +271,15 @@ const toggleStatus = (user: any) => {
                 />
 
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div class="col-span-1 md:col-span-2">
+                        <FileDropzone
+                            v-model="form.photo"
+                            label="Foto Profil (Opsional)"
+                            accept="image/*"
+                            :error="form.errors.photo"
+                        />
+                    </div>
+
                     <div class="col-span-1 md:col-span-2">
                         <TextInput
                             v-model="form.name"
@@ -363,5 +396,13 @@ const toggleStatus = (user: any) => {
                 </Button>
             </template>
         </Modal>
+
+        <ImageViewerModal
+            :show="isViewerOpen"
+            :image-src="selectedImageUrl"
+            :alt-text="selectedImageAlt"
+            @close="isViewerOpen = false"
+        />
+
     </AdminLayout>
 </template>

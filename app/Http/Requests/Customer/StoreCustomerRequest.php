@@ -30,6 +30,7 @@ class StoreCustomerRequest extends FormRequest
             'ship_name' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:500'],
             'credit_limit' => ['required', 'numeric', 'min:0'],
+            'photo' => ['nullable', 'image', 'max:5120', 'mimes:jpg,jpeg,png'],
         ];
     }
 }

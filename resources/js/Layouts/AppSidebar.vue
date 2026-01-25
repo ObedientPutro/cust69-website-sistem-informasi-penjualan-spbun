@@ -66,17 +66,17 @@ const menuGroupsRaw = [
                 ],
             },
             {
-                name: 'Riwayat Transaksi',
+                name: 'Riwayat / Mutasi',
                 icon: TableIcon,
                 roles: ['owner'],
                 subItems: [
                     {
-                        name: "Mutasi Stock",
+                        name: "Pembelian Stock",
                         path: "/history/restocks",
                         roles: ['owner']
                     },
                     {
-                        name: "Mutasi Sounding",
+                        name: "Riwayat Sounding",
                         path: "/history/soundings",
                         roles: ['owner']
                     },

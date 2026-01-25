@@ -33,6 +33,7 @@ class UpdateUserRequest extends FormRequest
             'phone' => ['required', 'string', 'max:20'],
             'address' => ['required', 'string'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'photo' => ['nullable', 'image', 'max:5120', 'mimes:jpg,jpeg,png'],
         ];
     }
 }

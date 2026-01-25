@@ -8,6 +8,8 @@ import Button from '@/Components/Ui/Button.vue';
 import TextInput from '@/Components/FormElements/TextInput.vue';
 import TextArea from '@/Components/FormElements/TextArea.vue';
 import ToggleSwitch from '@/Components/FormElements/ToggleSwitch.vue';
+import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
+import ImageViewerModal from '@/Components/Ui/ImageViewerModal.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 
 const props = defineProps<{ customers: any; filters: any }>();
@@ -22,7 +24,9 @@ const form = useForm({
     phone: '',
     ship_name: '',
     address: '',
-    credit_limit: 0
+    credit_limit: 0,
+    photo: null as File | null,
+    _method: 'post',
 });
 
 const params = ref({
@@ -53,26 +57,32 @@ const handleSort = (columnKey) => {
 const openCreate = () => {
     isEditMode.value = false;
     form.reset();
-    form.credit_limit = 0; // Default
+    form.credit_limit = 0;
+    form._method = 'post';
     isModalOpen.value = true;
 };
 
 const openEdit = (customer: any) => {
     isEditMode.value = true;
+    form.reset();
+
     form.id = customer.id;
     form.name = customer.name;
     form.phone = customer.phone;
     form.ship_name = customer.ship_name;
     form.address = customer.address;
     form.credit_limit = parseFloat(customer.credit_limit);
+    form.photo = null;
+    form._method = 'put';
+
     isModalOpen.value = true;
 };
 
 const submit = () => {
-    const action = isEditMode.value ? 'customers.update' : 'customers.save';
+    const routeName = isEditMode.value ? 'customers.update' : 'customers.store';
     const params = isEditMode.value ? form.id : undefined;
 
-    form[isEditMode.value ? 'put' : 'post'](route(action, params), {
+    form.post(route(routeName, params), {
         onSuccess: () => { isModalOpen.value = false; form.reset(); }
     });
 };
@@ -99,6 +109,16 @@ const toggleStatus = (customer: any) => {
             },
         },
     );
+};
+
+const isViewerOpen = ref(false);
+const selectedImageUrl = ref<string | null>(null);
+const selectedImageAlt = ref('');
+
+const openImageViewer = (url: string, alt: string) => {
+    selectedImageUrl.value = url;
+    selectedImageAlt.value = alt;
+    isViewerOpen.value = true;
 };
 
 const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
@@ -134,6 +154,27 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                     </template>
                     Tambah Nelayan
                 </Button>
+            </template>
+
+            <template #cell-name="{ row }">
+                <div class="flex items-center gap-3">
+                    <button
+                        @click="openImageViewer(row.photo_url, row.name)"
+                        class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700 transition hover:scale-110 hover:ring-2 hover:ring-orange-500 cursor-zoom-in"
+                    >
+                        <img
+                            :src="row.photo_url"
+                            :alt="row.name"
+                            class="h-full w-full object-cover"
+                        />
+                    </button>
+
+                    <div>
+                        <p class="font-medium text-gray-800 dark:text-white">
+                            {{ row.name }}
+                        </p>
+                    </div>
+                </div>
             </template>
 
             <template #cell-credit_limit="{ row }">
@@ -181,6 +222,15 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
 
         <Modal :show="isModalOpen" :title="isEditMode ? 'Edit Pelanggan' : 'Tambah Nelayan Baru'" @close="isModalOpen = false">
             <form @submit.prevent="submit" class="space-y-4">
+                <div class="col-span-1 md:col-span-2">
+                    <FileDropzone
+                        v-model="form.photo"
+                        label="Foto KTP / Wajah (Opsional)"
+                        accept="image/*"
+                        :error="form.errors.photo"
+                    />
+                </div>
+
                 <TextInput
                     v-model="form.name"
                     label="Nama Lengkap (Sesuai KTP)"
@@ -246,6 +296,14 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                 </Button>
             </template>
         </Modal>
+
+        <ImageViewerModal
+            :show="isViewerOpen"
+            :image-src="selectedImageUrl"
+            :alt-text="selectedImageAlt"
+            @close="isViewerOpen = false"
+        />
+
     </AdminLayout>
 </template>
 

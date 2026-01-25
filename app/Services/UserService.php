@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
@@ -15,19 +17,16 @@ class UserService
     public function getUsers(
         string $search = null,
         int $perPage = 10,
-        string $sortColumn = 'created_at', // Default sort
-        string $sortDirection = 'desc'     // Default direction
+        string $sortColumn = 'created_at',
+        string $sortDirection = 'desc'
     ): LengthAwarePaginator
     {
-        // Whitelist kolom yang boleh disortir untuk mencegah SQL Injection
         $allowedSorts = ['name', 'email', 'role', 'nip', 'is_active', 'created_at'];
 
-        // Fallback jika kolom tidak ada di whitelist
         if (!in_array($sortColumn, $allowedSorts)) {
             $sortColumn = 'created_at';
         }
 
-        // Fallback direction
         $sortDirection = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
 
         return User::query()
@@ -36,9 +35,9 @@ class UserService
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('nip', 'like', "%{$search}%");
             })
-            ->orderBy($sortColumn, $sortDirection) // Logika Sorting Disini
+            ->orderBy($sortColumn, $sortDirection)
             ->paginate($perPage)
-            ->withQueryString(); // Agar parameter sort & search tetap ada saat pindah halaman
+            ->withQueryString();
     }
 
     /**
@@ -47,6 +46,10 @@ class UserService
     public function createUser(array $data): User
     {
         return DB::transaction(function () use ($data) {
+            if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+                $data['photo'] = $data['photo']->store('users/photos', 'public');
+            }
+
             return User::create([
                 'name'      => $data['name'],
                 'email'     => $data['email'],
@@ -56,6 +59,7 @@ class UserService
                 'phone'     => $data['phone'] ?? null,
                 'address'   => $data['address'] ?? null,
                 'is_active' => true,
+                'photo'     => $data['photo'] ?? null,
             ]);
         });
     }
@@ -70,6 +74,15 @@ class UserService
                 unset($data['password']);
             } else {
                 $data['password'] = Hash::make($data['password']);
+            }
+
+            if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+                if ($user->photo) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+                $data['photo'] = $data['photo']->store('users/photos', 'public');
+            } else {
+                unset($data['photo']);
             }
 
             $user->update($data);
@@ -88,6 +101,9 @@ class UserService
 
         try {
             DB::transaction(function () use ($user) {
+                if ($user->photo) {
+                    Storage::disk('public')->delete($user->photo);
+                }
                 $user->delete();
             });
         } catch (\Illuminate\Database\QueryException $e) {

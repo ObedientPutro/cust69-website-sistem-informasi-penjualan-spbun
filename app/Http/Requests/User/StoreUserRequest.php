@@ -33,6 +33,7 @@ class StoreUserRequest extends FormRequest
             'phone' => ['required', 'string', 'max:20'],
             'address' => ['required', 'string'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'photo' => ['nullable', 'image', 'max:5120', 'mimes:jpg,jpeg,png'],
         ];
     }
 }

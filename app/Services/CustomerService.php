@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerService
 {
@@ -45,6 +47,10 @@ class CustomerService
     public function createCustomer(array $data): Customer
     {
         return DB::transaction(function () use ($data) {
+            if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+                $data['photo'] = $data['photo']->store('customers/photos', 'public');
+            }
+
             return Customer::create($data);
         });
     }
@@ -55,6 +61,15 @@ class CustomerService
     public function updateCustomer(Customer $customer, array $data): Customer
     {
         return DB::transaction(function () use ($customer, $data) {
+            if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+                if ($customer->photo) {
+                    Storage::disk('public')->delete($customer->photo);
+                }
+                $data['photo'] = $data['photo']->store('customers/photos', 'public');
+            } else {
+                unset($data['photo']);
+            }
+
             $customer->update($data);
             return $customer;
         });
@@ -67,6 +82,9 @@ class CustomerService
     {
         try {
             DB::transaction(function () use ($customer) {
+                if ($customer->photo) {
+                    Storage::disk('public')->delete($customer->photo);
+                }
                 $customer->delete();
             });
         } catch (\Illuminate\Database\QueryException $e) {

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('phone');
             $table->string('ship_name')->comment('Nama Kapal / Kelompok Tani');
             $table->text('address');
+            $table->string('photo')->nullable();
 
             // Limit Piutang (Default 0 = Tidak boleh hutang sebelum diset)
             $table->decimal('credit_limit', 15, 2)->default(0);

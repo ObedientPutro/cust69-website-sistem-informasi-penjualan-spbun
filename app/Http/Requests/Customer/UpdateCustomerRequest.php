@@ -30,6 +30,7 @@ class UpdateCustomerRequest extends FormRequest
             'ship_name' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:500'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'photo' => ['nullable', 'image', 'max:5120', 'mimes:jpg,jpeg,png'],
         ];
     }
 }
