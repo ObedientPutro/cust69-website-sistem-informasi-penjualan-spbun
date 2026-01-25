@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Inventory;
+namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\Restock;
+use App\Models\TankSounding;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Barryvdh\DomPDF\Facade\Pdf;
 
-class RestockHistoryController extends Controller
+class SoundingHistoryController extends Controller
 {
     public function index(Request $request)
     {
@@ -19,8 +19,8 @@ class RestockHistoryController extends Controller
         $productId = $request->input('product_id');
         $search = $request->input('search');
 
-        $query = Restock::with(['product', 'user'])
-            ->whereBetween('date', [$startDate, $endDate]);
+        $query = TankSounding::with(['product', 'user'])
+            ->whereBetween('recorded_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
 
         if ($productId) {
             $query->where('product_id', $productId);
@@ -28,28 +28,21 @@ class RestockHistoryController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('note', 'like', "%{$search}%") // Cari No DO
-                ->orWhereHas('product', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%"); // Cari Nama Produk
+                $q->whereHas('product', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
                 })
                     ->orWhereHas('user', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%"); // Cari Admin
+                        $q->where('name', 'like', "%{$search}%");
                     });
             });
         }
 
-        $summary = [
-            'total_volume' => $query->sum('volume_liter'),
-            'total_cost' => $query->sum('total_cost'),
-        ];
-
-        $logs = $query->latest('date')
+        $logs = $query->latest('recorded_at')
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('History/RestockHistory', [
+        return Inertia::render('History/SoundingHistory', [
             'logs' => $logs,
-            'summary' => $summary,
             'products' => Product::select('id', 'name')->orderBy('name')->get(),
             'filters' => [
                 'start_date' => $startDate,
@@ -67,36 +60,40 @@ class RestockHistoryController extends Controller
         $productId = $request->input('product_id');
         $format = $request->input('format', 'csv');
 
-        $query = Restock::with(['product', 'user'])->whereBetween('date', [$startDate, $endDate]);
+        $query = TankSounding::with(['product', 'user'])
+            ->whereBetween('recorded_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         if ($productId) $query->where('product_id', $productId);
 
         if ($format === 'pdf') {
-            $data = $query->orderBy('date', 'asc')->get(); // Get all data
-            $pdf = Pdf::loadView('exports.restocks_pdf', [
+            $data = $query->orderBy('recorded_at', 'asc')->get();
+            $pdf = Pdf::loadView('exports.soundings_pdf', [
                 'logs' => $data,
                 'start_date' => $startDate,
                 'end_date' => $endDate
             ]);
-            return $pdf->download("Laporan_Restock_{$startDate}.pdf");
+            return $pdf->download("Laporan_Audit_{$startDate}.pdf");
         }
 
-        $fileName = "Restock_DO_{$startDate}_{$endDate}.csv";
+        $fileName = "Audit_Tangki_{$startDate}_{$endDate}.csv";
 
         return response()->streamDownload(function () use ($startDate, $endDate, $productId) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Tanggal', 'No. DO / Ref', 'Produk', 'Volume (L)', 'Total Harga (Rp)', 'Admin']);
+            fputcsv($handle, ['Waktu Cek', 'Produk', 'Tinggi (cm)', 'Stok Sistem (L)', 'Stok Fisik (L)', 'Selisih (L)', 'Petugas']);
 
-            $query = Restock::with(['product', 'user'])->whereBetween('date', [$startDate, $endDate]);
+            $query = TankSounding::with(['product', 'user'])
+                ->whereBetween('recorded_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+
             if ($productId) $query->where('product_id', $productId);
 
             $query->chunk(200, function ($rows) use ($handle) {
                 foreach ($rows as $row) {
                     fputcsv($handle, [
-                        $row->date->format('Y-m-d'),
-                        $row->note ?? '-',
+                        $row->recorded_at->format('Y-m-d H:i'),
                         $row->product->name,
-                        $row->volume_liter,
-                        $row->total_cost,
+                        $row->physical_height_cm ?? '-',
+                        $row->system_liter_snapshot,
+                        $row->physical_liter,
+                        $row->difference,
                         $row->user->name
                     ]);
                 }

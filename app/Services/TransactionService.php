@@ -133,4 +133,44 @@ class TransactionService
             return $transaction;
         });
     }
+
+    /**
+     * Get Transaction History dengan Filter Lengkap
+     */
+    public function getHistory(array $filters, int $perPage = 15)
+    {
+        $query = Transaction::with(['user', 'customer', 'items.product']);
+
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $query->whereBetween('transaction_date', [
+                $filters['start_date'] . ' 00:00:00',
+                $filters['end_date'] . ' 23:59:59'
+            ]);
+        }
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%") // Asumsi ID sebagai No Ref
+                ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if (!empty($filters['product_id'])) {
+            $query->whereHas('items', function($q) use ($filters) {
+                $q->where('product_id', $filters['product_id']);
+            });
+        }
+
+        if (!empty($filters['payment_status'])) {
+            $query->where('payment_status', $filters['payment_status']);
+        }
+
+        if (!empty($filters['payment_method'])) {
+            $query->where('payment_method', $filters['payment_method']);
+        }
+
+        return $query->latest('transaction_date');
+    }
 }

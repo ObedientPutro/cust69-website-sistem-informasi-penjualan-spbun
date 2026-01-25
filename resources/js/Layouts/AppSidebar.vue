@@ -82,7 +82,7 @@ const menuGroupsRaw = [
                     },
                     {
                         name: 'Mutasi Transaksi',
-                        path: '/transactions',
+                        path: '/history/transactions',
                         roles: ['owner'],
                     },
                 ],
