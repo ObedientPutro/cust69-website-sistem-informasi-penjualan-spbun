@@ -40,7 +40,7 @@ class StoreTransactionRequest extends FormRequest
 
             'payment_proof' => [
                 'nullable',
-                'image', 'max:2048',
+                'image', 'max:5120',
                 // Jika Transfer, Bukti Wajib Diupload
                 Rule::requiredIf(fn() => $this->payment_method === PaymentMethodEnum::TRANSFER->value)
             ],

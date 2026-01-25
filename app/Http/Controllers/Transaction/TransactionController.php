@@ -33,7 +33,7 @@ class TransactionController extends Controller
             ->select('id', 'name', 'price', 'unit', 'stock')
             ->get();
 
-        $customers = Customer::select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::orderBy('name')->get();
 
         return Inertia::render('Transaction/Create', [
             'products' => $products,
@@ -51,9 +51,11 @@ class TransactionController extends Controller
                 $request->validated(),
                 $request->file('payment_proof')
             );
-
             return redirect()->route('transactions.create')
                 ->with('success', 'Transaksi berhasil disimpan!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Biarkan Laravel menangani error validasi (kembali ke form dengan error merah)
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage());

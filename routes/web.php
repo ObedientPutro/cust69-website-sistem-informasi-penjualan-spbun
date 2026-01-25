@@ -97,7 +97,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         // CRUD Transaksi (Edit & Hapus & Update Backdate)
-        Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])->name('transactions.modify');
         Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.delete');
     });
