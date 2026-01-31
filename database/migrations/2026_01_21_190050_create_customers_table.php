@@ -13,9 +13,13 @@ return new class extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('manager_name');
+            $table->string('owner_name');
+            $table->string('ship_name');
+            $table->string('ship_type');
+            $table->decimal('gross_tonnage', 8, 2);
+            $table->decimal('pk_engine', 8, 2);
             $table->string('phone');
-            $table->string('ship_name')->comment('Nama Kapal / Kelompok Tani');
             $table->text('address');
             $table->string('photo')->nullable();
 

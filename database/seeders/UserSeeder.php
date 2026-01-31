@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. OWNER (Pemilik)
+        // OWNER (Pemilik)
         User::create([
             'name' => 'Bapak Owner',
             'email' => 'owner@spbun.com',
@@ -27,19 +27,7 @@ class UserSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 2. ADMIN (Kepala Admin/Staff)
-        User::create([
-            'name' => 'Siti Aminah',
-            'email' => 'admin@spbun.com',
-            'password' => Hash::make('password'),
-            'nip' => 'ADM-001',
-            'address' => 'Jl. Melati Indah No. 45',
-            'phone' => '081234567890',
-            'role' => UserRoleEnum::ADMIN,
-            'is_active' => true,
-        ]);
-
-        // 3. OPERATOR 1
+        // OPERATOR 1
         User::create([
             'name' => 'Budi Santoso',
             'email' => 'op1@spbun.com',
@@ -51,7 +39,7 @@ class UserSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 4. OPERATOR 2
+        // OPERATOR 2
         User::create([
             'name' => 'Joko Anwar',
             'email' => 'op2@spbun.com',
@@ -63,7 +51,7 @@ class UserSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 5. OPERATOR 3
+        // OPERATOR 3
         User::create([
             'name' => 'Rina Wati',
             'email' => 'op3@spbun.com',

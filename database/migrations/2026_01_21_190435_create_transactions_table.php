@@ -14,26 +14,25 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-
             $table->foreignId('user_id')->constrained();
-            // Customer boleh null jika cash
-            $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
-
-            // Waktu Transaksi (Penting untuk Backdate Owner)
+            $table->foreignId('customer_id')->constrained();
             $table->dateTime('transaction_date');
+
+            // mungkin ada case transaksi admin diluar shift (jarang, tapi jaga-jaga)
+            $table->foreignId('pump_shift_id')->nullable()->constrained()->nullOnDelete();
 
             // Pembayaran
             $table->string('payment_method');
             $table->string('payment_status');
-            $table->string('payment_proof')->nullable()->comment('Path gambar bukti transfer');
-            $table->string('repayment_method')->nullable()->comment('cash/transfer saat bayar hutang');
-            $table->dateTime('paid_at')->nullable()->comment('Waktu pelunasan');
+            $table->string('payment_proof')->nullable();
+            $table->string('repayment_method')->nullable();
+            $table->dateTime('paid_at')->nullable();
 
             // Total Rupiah
             $table->decimal('grand_total', 15, 2);
 
             // Audit Trail
-            $table->boolean('was_stock_minus')->default(false)->comment('Flag jika stok minus saat input');
+            $table->boolean('was_stock_minus')->default(false);
             $table->text('note')->nullable();
 
             $table->timestamps();

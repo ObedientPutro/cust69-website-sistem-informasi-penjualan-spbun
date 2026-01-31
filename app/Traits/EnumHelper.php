@@ -12,7 +12,7 @@ trait EnumHelper
     {
         return array_map(fn($case) => [
             'value'   => $case->value,
-            'label' => $case->getLabel(), // Pastikan Enum menggunakan method getLabel()
+            'label' => $case->getLabel(),
         ], self::cases());
     }
 

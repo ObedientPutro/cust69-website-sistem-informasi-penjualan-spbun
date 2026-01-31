@@ -16,6 +16,7 @@ class Transaction extends Model
     protected $fillable = [
         'user_id',
         'customer_id',
+        'pump_shift_id',
         'transaction_date',
         'payment_method',
         'payment_status',
@@ -51,5 +52,10 @@ class Transaction extends Model
     public function items(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    public function pumpShift(): BelongsTo
+    {
+        return $this->belongsTo(PumpShift::class);
     }
 }
