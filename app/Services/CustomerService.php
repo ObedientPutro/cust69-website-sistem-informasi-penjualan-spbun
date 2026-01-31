@@ -20,7 +20,7 @@ class CustomerService
         string $sortDirection = 'desc'
     ): LengthAwarePaginator
     {
-        $allowedSorts = ['name', 'ship_name', 'phone', 'credit_limit', 'is_active', 'created_at'];
+        $allowedSorts = ['manager_name', 'owner_name', 'ship_name', 'phone', 'credit_limit', 'gross_tonnage', 'is_active', 'created_at'];
 
         if (!in_array($sortColumn, $allowedSorts)) {
             $sortColumn = 'created_at';
@@ -31,7 +31,8 @@ class CustomerService
         return Customer::query()
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
+                    $q->where('manager_name', 'like', "%{$search}%")
+                        ->orWhere('owner_name', 'like', "%{$search}%")
                         ->orWhere('ship_name', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%");
                 });

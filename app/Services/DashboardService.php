@@ -131,8 +131,8 @@ class DashboardService
         // 5 Penunggak Terbesar
         $topDebtors = Transaction::where('payment_status', PaymentStatusEnum::UNPAID)
             ->join('customers', 'transactions.customer_id', '=', 'customers.id')
-            ->select('customers.name', 'customers.ship_name', DB::raw('SUM(grand_total) as total_debt'), DB::raw('COUNT(transactions.id) as bon_count'))
-            ->groupBy('customers.id', 'customers.name', 'customers.ship_name')
+            ->select('customers.owner_name', 'customers.ship_name', DB::raw('SUM(grand_total) as total_debt'), DB::raw('COUNT(transactions.id) as bon_count'))
+            ->groupBy('customers.id', 'customers.owner_name', 'customers.ship_name')
             ->orderByDesc('total_debt')
             ->limit(5)
             ->get();

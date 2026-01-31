@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Core;
 
+use App\Enums\ShipTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
@@ -31,6 +32,7 @@ class CustomerController extends Controller
         return Inertia::render('Customer/Index', [
             'customers' => $customers,
             'filters'   => $request->only(['search', 'sort', 'direction']),
+            'shipTypes' => ShipTypeEnum::toArray(),
         ]);
     }
 

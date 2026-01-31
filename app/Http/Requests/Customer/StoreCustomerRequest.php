@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Enums\ShipTypeEnum;
 use App\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
@@ -25,9 +26,13 @@ class StoreCustomerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:20', Rule::unique(Customer::class, 'phone')],
+            'manager_name' => ['required', 'string', 'max:255'],
+            'owner_name' => ['required', 'string', 'max:255'],
             'ship_name' => ['required', 'string', 'max:255'],
+            'ship_type' => ['required', Rule::enum(ShipTypeEnum::class)],
+            'gross_tonnage' => ['required', 'numeric', 'min:0'],
+            'pk_engine' => ['required', 'numeric', 'min:0'],
+            'phone' => ['required', 'string', 'max:20', Rule::unique(Customer::class, 'phone')],
             'address' => ['required', 'string', 'max:500'],
             'credit_limit' => ['required', 'numeric', 'min:0'],
             'photo' => ['nullable', 'image', 'max:5120', 'mimes:jpg,jpeg,png'],

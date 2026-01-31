@@ -9,10 +9,15 @@ import TextInput from '@/Components/FormElements/TextInput.vue';
 import TextArea from '@/Components/FormElements/TextArea.vue';
 import ToggleSwitch from '@/Components/FormElements/ToggleSwitch.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
+import SelectInput from '@/Components/FormElements/SelectInput.vue';
 import ImageViewerModal from '@/Components/Ui/ImageViewerModal.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 
-const props = defineProps<{ customers: any; filters: any }>();
+const props = defineProps<{
+    customers: any;
+    filters: any;
+    shipTypes: { value: string, label: string }[]
+}>();
 const swal = useSweetAlert();
 
 const isModalOpen = ref(false);
@@ -20,9 +25,13 @@ const isEditMode = ref(false);
 
 const form = useForm({
     id: null,
-    name: '',
+    manager_name: '',
+    owner_name: '',
     phone: '',
     ship_name: '',
+    ship_type: 'fishing',
+    gross_tonnage: 0,
+    pk_engine: 0,
     address: '',
     credit_limit: 0,
     photo: null as File | null,
@@ -36,12 +45,12 @@ const params = ref({
 });
 
 const columns = [
-    { label: 'Nama Nelayan', key: 'name', sortable: true, align: 'left' },
-    { label: 'Kapal / Kelompok', key: 'ship_name', sortable: true, align: 'left' },
-    { label: 'No HP', key: 'phone', sortable: false, align: 'left' },
-    { label: 'Limit Bon (Rp)', key: 'credit_limit', sortable: true, align: 'center' },
-    { label: 'Status Kredit', key: 'is_active', sortable: true, align: 'center' },
-    { label: 'Alamat', key: 'address', sortable: false, align: 'left' },
+    { label: 'Nama Pengurus', key: 'manager_name', sortable: true, align: 'left' },
+    { label: 'Kapal', key: 'ship_name', sortable: true, align: 'left' },
+    { label: 'Pemilik', key: 'owner_name', sortable: true, align: 'left' },
+    { label: 'GT / PK', key: 'gross_tonnage', sortable: true, align: 'center' },
+    { label: 'Limit Bon', key: 'credit_limit', sortable: true, align: 'center' },
+    { label: 'Status', key: 'is_active', sortable: true, align: 'center' },
 ];
 
 const handleSort = (columnKey) => {
@@ -58,6 +67,9 @@ const openCreate = () => {
     isEditMode.value = false;
     form.reset();
     form.credit_limit = 0;
+    form.gross_tonnage = 0;
+    form.pk_engine = 0;
+    form.ship_type = 'fishing';
     form._method = 'post';
     isModalOpen.value = true;
 };
@@ -65,21 +77,23 @@ const openCreate = () => {
 const openEdit = (customer: any) => {
     isEditMode.value = true;
     form.reset();
-
     form.id = customer.id;
-    form.name = customer.name;
+    form.manager_name = customer.manager_name;
+    form.owner_name = customer.owner_name;
     form.phone = customer.phone;
     form.ship_name = customer.ship_name;
+    form.ship_type = customer.ship_type;
+    form.gross_tonnage = parseFloat(customer.gross_tonnage);
+    form.pk_engine = parseFloat(customer.pk_engine);
     form.address = customer.address;
     form.credit_limit = parseFloat(customer.credit_limit);
     form.photo = null;
     form._method = 'put';
-
     isModalOpen.value = true;
 };
 
 const submit = () => {
-    const routeName = isEditMode.value ? 'customers.update' : 'customers.store';
+    const routeName = isEditMode.value ? 'customers.update' : 'customers.save';
     const params = isEditMode.value ? form.id : undefined;
 
     form.post(route(routeName, params), {
@@ -156,24 +170,31 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                 </Button>
             </template>
 
-            <template #cell-name="{ row }">
+            <template #cell-manager_name="{ row }">
                 <div class="flex items-center gap-3">
                     <button
-                        @click="openImageViewer(row.photo_url, row.name)"
+                        @click="openImageViewer(row.photo_url, row.manager_name)"
                         class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700 transition hover:scale-110 hover:ring-2 hover:ring-orange-500 cursor-zoom-in"
                     >
                         <img
                             :src="row.photo_url"
-                            :alt="row.name"
+                            :alt="row.manager_name"
                             class="h-full w-full object-cover"
                         />
                     </button>
 
                     <div>
                         <p class="font-medium text-gray-800 dark:text-white">
-                            {{ row.name }}
+                            {{ row.manager_name }}
                         </p>
                     </div>
+                </div>
+            </template>
+
+            <template #cell-gross_tonnage="{ row }">
+                <div class="text-xs">
+                    <span class="block font-medium">GT: {{ row.gross_tonnage }}</span>
+                    <span class="block text-gray-500">PK: {{ row.pk_engine }}</span>
                 </div>
             </template>
 
@@ -222,24 +243,35 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
 
         <Modal :show="isModalOpen" :title="isEditMode ? 'Edit Pelanggan' : 'Tambah Nelayan Baru'" @close="isModalOpen = false">
             <form @submit.prevent="submit" class="space-y-4">
-                <div class="col-span-1 md:col-span-2">
-                    <FileDropzone
-                        v-model="form.photo"
-                        label="Foto KTP / Wajah (Opsional)"
-                        accept="image/*"
-                        :error="form.errors.photo"
-                    />
-                </div>
+                <TextInput
+                    v-model="form.ship_name"
+                    label="Nama Kapal"
+                    required
+                    :error="form.errors.ship_name"
+                />
 
                 <TextInput
-                    v-model="form.name"
-                    label="Nama Lengkap (Sesuai KTP)"
-                    placeholder="Contoh: Budi Santoso"
+                    v-model="form.owner_name"
+                    label="Nama Pemilik Kapal"
                     required
-                    :error="form.errors.name"
+                    :error="form.errors.owner_name"
+                />
+
+                <TextInput
+                    v-model="form.manager_name"
+                    label="Nama Pengurus (Nakhoda)"
+                    required
+                    :error="form.errors.manager_name"
                 />
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <SelectInput
+                        v-model="form.ship_type"
+                        label="Jenis Kapal"
+                        :options="shipTypes"
+                        :error="form.errors.ship_type"
+                        required
+                    />
                     <TextInput
                         v-model="form.phone"
                         label="No. Handphone"
@@ -247,12 +279,24 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                         required
                         :error="form.errors.phone"
                     />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
                     <TextInput
-                        v-model="form.ship_name"
-                        label="Nama Kapal / Kelompok"
-                        placeholder="KM. Sejahtera 01"
+                        v-model="form.gross_tonnage"
+                        type="number"
+                        step="0.01"
+                        label="Gross Tonnage (GT)"
                         required
-                        :error="form.errors.ship_name"
+                        :error="form.errors.gross_tonnage"
+                    />
+                    <TextInput
+                        v-model="form.pk_engine"
+                        type="number"
+                        step="0.01"
+                        label="PK Mesin (HP)"
+                        required
+                        :error="form.errors.pk_engine"
                     />
                 </div>
 
@@ -276,6 +320,15 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                     required
                     :error="form.errors.address"
                 />
+
+                <div class="col-span-1 md:col-span-2">
+                    <FileDropzone
+                        v-model="form.photo"
+                        label="Foto KTP / Wajah (Opsional)"
+                        accept="image/*"
+                        :error="form.errors.photo"
+                    />
+                </div>
             </form>
 
             <template #footer>
