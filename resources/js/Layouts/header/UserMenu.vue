@@ -1,21 +1,20 @@
 <script setup>
 import {
     ChevronDownIcon,
-    InfoCircleIcon,
     LogoutIcon,
-    SettingsIcon,
     UserCircleIcon,
 } from '@/Components/Icons';
-import { Link } from '@inertiajs/vue3';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { onMounted, onUnmounted, ref, computed } from 'vue';
 
 const dropdownOpen = ref(false);
 const dropdownRef = ref(null);
 
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
 const menuItems = [
     { href: '/profile', icon: UserCircleIcon, text: 'Edit profile' },
-    { href: '/chat', icon: SettingsIcon, text: 'Account settings' },
-    { href: '/profile', icon: InfoCircleIcon, text: 'Support' },
 ];
 
 const toggleDropdown = () => {
@@ -27,9 +26,9 @@ const closeDropdown = () => {
 };
 
 const signOut = () => {
-    // Implement sign out logic here
-    console.log('Signing out...');
-    closeDropdown();
+    router.post(route('logout'), {}, {
+        onFinish: () => closeDropdown(),
+    });
 };
 
 const handleClickOutside = (event) => {
@@ -53,11 +52,17 @@ onUnmounted(() => {
             class="flex items-center text-gray-700 dark:text-gray-400"
             @click.prevent="toggleDropdown"
         >
-            <span class="mr-3 h-11 w-11 overflow-hidden rounded-full">
-                <img src="/images/user/owner.jpg" alt="User" />
+            <span class="mr-3 h-11 w-11 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700">
+                <img
+                    :src="user.photo_url"
+                    :alt="user.name"
+                    class="h-full w-full object-cover"
+                />
             </span>
 
-            <span class="text-theme-sm mr-1 block font-medium">Musharof </span>
+            <span class="text-theme-sm mr-1 block font-medium">
+                {{ user.name.split(' ')[0] }}
+            </span>
 
             <ChevronDownIcon :class="{ 'rotate-180': dropdownOpen }" />
         </button>
@@ -67,16 +72,21 @@ onUnmounted(() => {
             v-if="dropdownOpen"
             class="shadow-theme-lg dark:bg-gray-dark absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-800"
         >
-            <div>
+            <div class="px-3 py-2">
                 <span
-                    class="text-theme-sm block font-medium text-gray-700 dark:text-gray-400"
+                    class="text-theme-sm block font-medium text-gray-700 dark:text-gray-400 truncate"
                 >
-                    Musharof Chowdhury
+                    {{ user.name }}
                 </span>
                 <span
-                    class="text-theme-xs mt-0.5 block text-gray-500 dark:text-gray-400"
+                    class="text-theme-xs mt-0.5 block text-gray-500 dark:text-gray-400 truncate"
                 >
-                    randomuser@pimjo.com
+                    {{ user.email }}
+                </span>
+                <span
+                    class="text-[10px] uppercase font-bold tracking-wider mt-1 px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 inline-block"
+                >
+                    {{ user.role }}
                 </span>
             </div>
 
@@ -97,16 +107,15 @@ onUnmounted(() => {
                     </Link>
                 </li>
             </ul>
-            <Link
-                href="/signin"
+            <button
                 @click="signOut"
-                class="group text-theme-sm mt-3 flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                class="group text-theme-sm mt-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 text-left"
             >
                 <LogoutIcon
                     class="text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300"
                 />
                 Sign out
-            </Link>
+            </button>
         </div>
         <!-- Dropdown End -->
     </div>

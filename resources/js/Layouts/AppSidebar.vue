@@ -24,22 +24,27 @@ const menuGroupsRaw = [
                 icon: GridIcon,
                 name: 'Dashboard',
                 path: '/dashboard',
-                roles: ['owner'],
+                roles: ['owner', 'operator'],
             },
             {
                 name: 'Transaksi',
                 icon: SendIcon,
-                roles: ['owner'],
+                roles: ['owner', 'operator'],
                 subItems: [
                     {
                         name: 'POS Kasir',
                         path: '/pos',
-                        roles: ['owner'],
+                        roles: ['owner', 'operator'],
                     },
                     {
                         name: 'Transaksi Bon',
                         path: '/debts',
-                        roles: ['owner'],
+                        roles: ['owner', 'operator'],
+                    },
+                    {
+                        name: 'Shift POS',
+                        path: '/shifts',
+                        roles: ['owner', 'operator'],
                     },
                 ],
             },

@@ -2,15 +2,16 @@
 
 use App\Http\Controllers\Core\CustomerController;
 use App\Http\Controllers\Core\DashboardController;
+use App\Http\Controllers\Core\InventoryController;
 use App\Http\Controllers\Core\ProductController;
 use App\Http\Controllers\Core\UserController;
 use App\Http\Controllers\History\RestockHistoryController;
 use App\Http\Controllers\History\SoundingHistoryController;
 use App\Http\Controllers\History\TransactionHistoryController;
-use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Transaction\DebtController;
+use App\Http\Controllers\Transaction\ShiftController;
 use App\Http\Controllers\Transaction\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +51,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     Route::patch('/customers/{customer}/toggle', [CustomerController::class, 'toggleStatus'])
         ->name('customers.toggle-status');
+
+    // --- OPEN AND CLOSE SHIFT ---
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
+        Route::post('/shifts', [ShiftController::class, 'store'])->name('shifts.store');
+        Route::post('/shifts/{shift}/close', [ShiftController::class, 'update'])->name('shifts.close');
+    });
 
     // =====================================================================
     // GROUP 2: OWNER ONLY (SUPER ADMIN)
