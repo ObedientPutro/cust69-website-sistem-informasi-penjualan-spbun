@@ -94,8 +94,14 @@ const menuGroupsRaw = [
         items: [
             {
                 icon: PieChartIcon,
-                name: 'Laporan Keuangan',
-                path: '/reports/financial',
+                name: 'Laporan Penjualan',
+                path: '/reports/sales',
+                roles: ['owner'],
+            },
+            {
+                icon: DocsIcon,
+                name: 'Laporan Laba Rugi',
+                path: '/reports/profit',
                 roles: ['owner'],
             },
             {
