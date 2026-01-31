@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Transaction;
 
+use App\Enums\ShipTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Transaction\StoreTransactionRequest;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Services\ShiftService;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +15,8 @@ use Inertia\Inertia;
 class TransactionController extends Controller
 {
     public function __construct(
-        protected TransactionService $transactionService
+        protected TransactionService $transactionService,
+        protected ShiftService $shiftService
     ) {}
 
     /**
@@ -21,7 +24,7 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        //
+        redirect(route('dashboard'));
     }
 
     /**
@@ -33,11 +36,15 @@ class TransactionController extends Controller
             ->select('id', 'name', 'price', 'unit', 'stock')
             ->get();
 
-        $customers = Customer::orderBy('name')->get();
+        $customers = Customer::orderBy('manager_name')->get();
+
+        $activeShifts = $this->shiftService->getActiveShiftsMap();
 
         return Inertia::render('Transaction/Create', [
             'products' => $products,
             'customers' => $customers,
+            'shipTypes' => ShipTypeEnum::toArray(),
+            'activeShifts' => $activeShifts,
         ]);
     }
 
@@ -67,7 +74,7 @@ class TransactionController extends Controller
      */
     public function show(string $id)
     {
-        //
+        redirect(route('dashboard'));
     }
 
     /**
@@ -75,7 +82,7 @@ class TransactionController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        redirect(route('dashboard'));
     }
 
     /**
@@ -83,7 +90,7 @@ class TransactionController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        redirect(route('dashboard'));
     }
 
     /**
@@ -91,6 +98,6 @@ class TransactionController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        redirect(route('dashboard'));
     }
 }

@@ -15,14 +15,15 @@ class PumpShift extends Model
 
     protected $fillable = [
         'date',
-        'user_id',
         'product_id',
         'opening_totalizer',
         'opening_proof',
+        'opened_by',
         'opened_at',
         'closing_totalizer',
         'closing_proof',
         'cash_collected',
+        'closed_by',
         'closed_at',
         'total_sales_liter',
         'system_transaction_liter',
@@ -58,14 +59,19 @@ class PumpShift extends Model
     }
 
     // --- Relationships ---
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function opener(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'opened_by');
+    }
+
+    public function closer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'closed_by');
     }
 
     public function transactions(): HasMany

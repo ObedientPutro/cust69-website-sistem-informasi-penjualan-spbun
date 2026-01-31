@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Transaction;
 
+use App\Enums\PumpShiftStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shift\CloseShiftRequest;
 use App\Http\Requests\Shift\OpenShiftRequest;
@@ -20,24 +21,46 @@ class ShiftController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil Shift Aktif User Login
-        $activeShift = $this->shiftService->getCurrentActiveShift();
+        $products = Product::where('is_active', true)
+            ->select('id', 'name', 'stock', 'unit')
+            ->orderBy('name')
+            ->get();
 
-        // Ambil History Shift (Pagination)
-        $history = PumpShift::with(['product', 'user'])
-            ->where('user_id', auth()->id()) // Operator lihat history dia sendiri
-            ->latest()
-            ->paginate(10);
+        $activeShifts = PumpShift::with(['opener:id,name,photo'])
+            ->where('status', PumpShiftStatusEnum::OPEN)
+            ->get()
+            ->keyBy('product_id');
 
-        // Ambil Produk yang tersedia untuk dibuka (Opsional, buat dropdown)
-        $products = Product::where('is_active', true)->get();
+        $query = PumpShift::with(['product', 'opener:id,name', 'closer:id,name']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->whereHas('product', fn($p) => $p->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('opener', fn($u) => $u->where('name', 'like', "%{$search}%"))
+                    ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
+
+        $sortColumn = $request->input('sort', 'opened_at');
+        $sortDirection = $request->input('direction', 'desc');
+
+        $allowedSorts = ['opened_at', 'total_sales_liter', 'status', 'opening_totalizer', 'closing_totalizer'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        } else {
+            $query->latest('opened_at');
+        }
+
+        $history = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Shift/Index', [
-            'activeShift' => $activeShift,
+            'products' => $products,
+            'activeShifts' => $activeShifts,
             'history' => $history,
-            'products' => $products
+            'filters' => $request->only(['search', 'sort', 'direction']),
         ]);
     }
 

@@ -83,7 +83,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
         <div class="mb-6 flex flex-col gap-4">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white">Mutasi Transaksi Penjualan</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <MetricCard
                     title="Total Omset (Filter Ini)"
                     :value="formatRupiah(summary.total_omset)"

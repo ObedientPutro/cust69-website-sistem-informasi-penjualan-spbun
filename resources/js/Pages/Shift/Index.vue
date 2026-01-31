@@ -2,221 +2,270 @@
 import { ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import DataTable from '@/Components/Tables/DataTable.vue';
 import Button from '@/Components/Ui/Button.vue';
 import TextInput from '@/Components/FormElements/TextInput.vue';
-import SelectInput from '@/Components/FormElements/SelectInput.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
-import Alert from '@/Components/Ui/Alert.vue';
-import MetricCard from '@/Components/Metrics/MetricCard.vue';
 import Badge from '@/Components/Ui/Badge.vue';
+import Modal from '@/Components/Ui/Modal.vue';
+import { useSweetAlert } from '@/Composables/useSweetAlert';
 
 const props = defineProps<{
-    activeShift: any; // Object Shift aktif (null jika tidak ada)
-    history: any;
     products: any[];
+    activeShifts: Record<string, any>;
+    history: any; // Paginator Object
+    filters: any; // Filter Object
 }>();
 
-// --- FORM BUKA SHIFT ---
+const swal = useSweetAlert();
+
+// --- CONFIG DATA TABLE ---
+const columns = [
+    { label: 'Waktu / Tanggal', key: 'opened_at', sortable: true, align: 'left' },
+    { label: 'Produk', key: 'product', sortable: false, align: 'left' },
+    { label: 'Petugas', key: 'opener', sortable: false, align: 'left' },
+    { label: 'Meter Awal', key: 'opening_totalizer', sortable: true, align: 'right' },
+    { label: 'Meter Akhir', key: 'closing_totalizer', sortable: true, align: 'right' },
+    { label: 'Terjual (L)', key: 'total_sales_liter', sortable: true, align: 'right' },
+    { label: 'Status', key: 'status', sortable: true, align: 'center' },
+];
+
+// --- FORM & MODAL LOGIC (Tetap Sama) ---
 const openForm = useForm({
     product_id: '',
     opening_totalizer: '',
     opening_proof: null as File | null,
 });
 
-const submitOpen = () => {
-    openForm.post(route('shifts.store'), {
-        onSuccess: () => openForm.reset(),
-    });
-};
-
-// --- FORM TUTUP SHIFT ---
 const closeForm = useForm({
     closing_totalizer: '',
-    cash_collected: '', // Uang Fisik
+    cash_collected: '',
     closing_proof: null as File | null,
 });
 
-const submitClose = () => {
-    if (!props.activeShift) return;
+const isOpenModalVisible = ref(false);
+const isCloseModalVisible = ref(false);
+const selectedProduct = ref<any>(null);
+const selectedShift = ref<any>(null);
 
-    closeForm.post(route('shifts.close', props.activeShift.id), {
-        onSuccess: () => closeForm.reset(),
+const handleOpenClick = (product: any) => {
+    selectedProduct.value = product;
+    openForm.reset();
+    openForm.product_id = product.id;
+    isOpenModalVisible.value = true;
+};
+
+const handleCloseClick = (product: any, shift: any) => {
+    selectedProduct.value = product;
+    selectedShift.value = shift;
+    closeForm.reset();
+    isCloseModalVisible.value = true;
+};
+
+const submitOpen = () => {
+    openForm.post(route('shifts.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isOpenModalVisible.value = false;
+            swal.toast('Shift Berhasil Dibuka!', 'success');
+        },
+        onError: () => swal.toast('Gagal membuka shift', 'error')
     });
 };
 
-// Helper Format
-const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+const submitClose = () => {
+    if (!selectedShift.value) return;
+
+    closeForm.post(route('shifts.close', selectedShift.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isCloseModalVisible.value = false;
+            swal.toast('Shift Ditutup & Data Tersimpan', 'success');
+        },
+        onError: () => swal.toast('Gagal menutup shift', 'error')
+    });
+};
+
+// --- HELPER ---
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('id-ID', {
+        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+};
+
+const formatNumber = (num: number | string) => {
+    return Number(num).toLocaleString('id-ID');
+};
 </script>
 
 <template>
-    <Head title="Shift Operasional" />
+    <Head title="Operasional Shift" />
     <AdminLayout>
 
         <div class="mb-6">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white">Operasional Shift (Totalisator)</h2>
-            <p class="text-sm text-gray-500">Input meteran awal dan akhir untuk membuka akses transaksi.</p>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">Kontrol Shift Pompa</h2>
+            <p class="text-sm text-gray-500">Kelola buka/tutup shift untuk setiap produk BBM.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-
-            <div class="space-y-6">
-
-                <div v-if="activeShift" class="rounded-2xl border border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-900/20">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <span class="animate-pulse h-3 w-3 rounded-full bg-green-500"></span>
-                            <h3 class="text-lg font-bold text-green-800 dark:text-green-400">Shift Aktif</h3>
-                        </div>
-                        <Badge variant="light" color="success">OPEN</Badge>
-                    </div>
-
-                    <div class="space-y-3 text-sm text-green-900 dark:text-green-300">
-                        <div class="flex justify-between border-b border-green-200 pb-2 dark:border-green-800">
-                            <span>Produk</span>
-                            <span class="font-bold">{{ activeShift.product?.name }}</span>
-                        </div>
-                        <div class="flex justify-between border-b border-green-200 pb-2 dark:border-green-800">
-                            <span>Waktu Buka</span>
-                            <span class="font-mono">{{ formatDate(activeShift.opened_at) }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Totalisator Awal</span>
-                            <span class="font-mono font-bold text-lg">{{ activeShift.opening_totalizer }}</span>
-                        </div>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+            <div v-for="product in products" :key="product.id"
+                 class="relative rounded-2xl border transition-all duration-300 shadow-sm overflow-hidden flex flex-col"
+                 :class="activeShifts[product.id]
+                    ? 'border-green-200 bg-green-50/30 dark:border-green-800/50 dark:bg-green-900/10'
+                    : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'"
+            >
+                <div class="px-5 py-3 border-b flex justify-between items-center"
+                     :class="activeShifts[product.id] ? 'border-green-100 bg-green-100/50 dark:border-green-800 dark:bg-green-900/20' : 'border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800'"
+                >
+                    <h3 class="font-bold text-lg text-gray-800 dark:text-white">{{ product.name }}</h3>
+                    <Badge :color="activeShifts[product.id] ? 'success' : 'secondary'">
+                        {{ activeShifts[product.id] ? 'SHIFT OPEN' : 'CLOSED' }}
+                    </Badge>
                 </div>
 
-                <div v-else class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-                    <div class="text-center py-6">
-                        <div class="mx-auto h-12 w-12 text-gray-400 mb-3">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div v-if="activeShifts[product.id]" class="space-y-4">
+                        <div class="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                            <img :src="activeShifts[product.id].opener?.photo_url" class="h-10 w-10 rounded-full bg-gray-200 object-cover">
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase font-bold">Dibuka Oleh</p>
+                                <p class="text-sm font-medium dark:text-gray-200">{{ activeShifts[product.id].opener?.name }}</p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Tidak ada Shift Aktif</h3>
-                        <p class="text-sm text-gray-500">Silakan buka shift baru untuk memulai transaksi penjualan.</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <span class="text-xs text-blue-600 dark:text-blue-400 block mb-1">Jam Buka</span>
+                                <span class="font-mono font-bold text-gray-800 dark:text-white">
+                                    {{ new Date(activeShifts[product.id].opened_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) }}
+                                </span>
+                            </div>
+                            <div class="p-3 bg-orange-50 dark:bg-orange-900/10 rounded-lg border border-orange-100 dark:border-orange-800">
+                                <span class="text-xs text-orange-600 dark:text-orange-400 block mb-1">Meter Awal</span>
+                                <span class="font-mono font-bold text-gray-800 dark:text-white">
+                                    {{ formatNumber(activeShifts[product.id].opening_totalizer) }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 shadow-sm">
-
-                <div v-if="activeShift">
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Tutup Shift (Closing)</h3>
-                    <form @submit.prevent="submitClose" class="space-y-4">
-                        <TextInput
-                            v-model="closeForm.closing_totalizer"
-                            type="number"
-                            step="0.01"
-                            label="Angka Totalisator Akhir (Wajib)"
-                            placeholder="Contoh: 12500.50"
-                            required
-                            :error="closeForm.errors.closing_totalizer"
-                        />
-                        <p class="text-xs text-gray-500">*Harus lebih besar dari {{ activeShift.opening_totalizer }}</p>
-
-                        <TextInput
-                            v-model="closeForm.cash_collected"
-                            type="number"
-                            label="Total Uang Fisik (Cash)"
-                            placeholder="Hitung uang di laci..."
-                            required
-                            :error="closeForm.errors.cash_collected"
-                        />
-
-                        <FileDropzone
-                            v-model="closeForm.closing_proof"
-                            label="Foto Meteran Akhir (Opsional)"
-                            accept="image/*"
-                        />
-
-                        <div class="pt-4 border-t dark:border-gray-700">
-                            <Button type="submit" variant="danger" class="w-full justify-center" :processing="closeForm.processing">
-                                Tutup Shift & Kunci Transaksi
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-
-                <div v-else>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Buka Shift Baru</h3>
-                    <form @submit.prevent="submitOpen" class="space-y-4">
-
-                        <SelectInput
-                            v-model="openForm.product_id"
-                            label="Pilih Produk / Nozzle"
-                            required
-                            :error="openForm.errors.product_id"
+                    <div v-else class="text-center py-6 text-gray-400">
+                        <svg class="mx-auto h-12 w-12 opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        <p class="text-sm">Pompa terkunci. <br>Silakan buka shift untuk memulai.</p>
+                    </div>
+                    <div class="mt-6">
+                        <Button
+                            v-if="activeShifts[product.id]"
+                            @click="handleCloseClick(product, activeShifts[product.id])"
+                            variant="danger"
+                            class="w-full justify-center"
                         >
-                            <option value="">-- Pilih Produk BBM --</option>
-                            <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }} (Stok: {{ p.stock }})</option>
-                        </SelectInput>
-
-                        <Alert
-                            v-if="openForm.errors.product_id"
-                            variant="error"
-                            :message="openForm.errors.product_id"
-                            class="mt-1"
-                        />
-
-                        <TextInput
-                            v-model="openForm.opening_totalizer"
-                            type="number"
-                            step="0.01"
-                            label="Angka Totalisator Awal"
-                            placeholder="Masukkan angka di mesin..."
-                            required
-                            :error="openForm.errors.opening_totalizer"
-                        />
-
-                        <FileDropzone
-                            v-model="openForm.opening_proof"
-                            label="Foto Meteran Awal (Opsional)"
-                            accept="image/*"
-                        />
-
-                        <div class="pt-4 border-t dark:border-gray-700">
-                            <Button type="submit" variant="primary" class="w-full justify-center" :processing="openForm.processing">
-                                Buka Shift Sekarang
-                            </Button>
-                        </div>
-                    </form>
+                            Tutup Shift (Closing)
+                        </Button>
+                        <Button
+                            v-else
+                            @click="handleOpenClick(product)"
+                            variant="primary"
+                            class="w-full justify-center"
+                        >
+                            Buka Shift Baru
+                        </Button>
+                    </div>
                 </div>
-
             </div>
         </div>
 
-        <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                <h3 class="font-bold text-gray-800 dark:text-white">Riwayat Shift Anda</h3>
-            </div>
-            <table class="w-full text-left text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
-                <tr>
-                    <th class="px-6 py-3">Tanggal</th>
-                    <th class="px-6 py-3">Produk</th>
-                    <th class="px-6 py-3 text-right">Meter Awal</th>
-                    <th class="px-6 py-3 text-right">Meter Akhir</th>
-                    <th class="px-6 py-3 text-center">Status</th>
-                </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <tr v-for="item in history.data" :key="item.id">
-                    <td class="px-6 py-3">{{ formatDate(item.date) }}</td>
-                    <td class="px-6 py-3 font-bold">{{ item.product.name }}</td>
-                    <td class="px-6 py-3 text-right font-mono">{{ item.opening_totalizer }}</td>
-                    <td class="px-6 py-3 text-right font-mono">{{ item.closing_totalizer || '-' }}</td>
-                    <td class="px-6 py-3 text-center">
-                        <Badge :color="item.status === 'open' ? 'success' : (item.status === 'audited' ? 'primary' : 'warning')">
-                            {{ item.status.toUpperCase() }}
-                        </Badge>
-                    </td>
-                </tr>
-                <tr v-if="history.data.length === 0">
-                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Belum ada riwayat shift.</td>
-                </tr>
-                </tbody>
-            </table>
+        <div class="mb-4">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white">Riwayat Aktivitas Shift</h3>
         </div>
+
+        <DataTable
+            :rows="history.data"
+            :columns="columns"
+            :pagination="history"
+            :filters="filters"
+            :enable-actions="false"
+        >
+            <template #cell-opened_at="{ row }">
+                <div class="text-sm">
+                    <span class="block font-medium text-gray-800 dark:text-white">{{ formatDate(row.opened_at) }}</span>
+                    <span v-if="row.closed_at" class="text-xs text-gray-500">
+                        Tutup: {{ formatDate(row.closed_at) }}
+                    </span>
+                </div>
+            </template>
+
+            <template #cell-product="{ row }">
+                <span class="font-bold text-gray-700 dark:text-gray-300">{{ row.product?.name }}</span>
+            </template>
+
+            <template #cell-opener="{ row }">
+                <div class="flex flex-col text-xs gap-1">
+                    <div class="flex items-center gap-1">
+                        <span class="w-8 text-gray-400">Buka:</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ row.opener?.name }}</span>
+                    </div>
+                    <div v-if="row.closer" class="flex items-center gap-1">
+                        <span class="w-8 text-gray-400">Tutup:</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ row.closer?.name }}</span>
+                    </div>
+                </div>
+            </template>
+
+            <template #cell-opening_totalizer="{ row }">
+                <span class="font-mono text-gray-600 dark:text-gray-400">{{ formatNumber(row.opening_totalizer) }}</span>
+            </template>
+
+            <template #cell-closing_totalizer="{ row }">
+                <span class="font-mono text-gray-600 dark:text-gray-400">{{ row.closing_totalizer ? formatNumber(row.closing_totalizer) : '-' }}</span>
+            </template>
+
+            <template #cell-total_sales_liter="{ row }">
+                <span v-if="row.total_sales_liter > 0" class="font-bold font-mono text-gray-800 dark:text-white">
+                    {{ formatNumber(row.total_sales_liter) }}
+                </span>
+                <span v-else class="-">-</span>
+            </template>
+
+            <template #cell-status="{ row }">
+                <Badge :color="row.status === 'open' ? 'success' : 'secondary'" class="text-[10px] uppercase">
+                    {{ row.status }}
+                </Badge>
+            </template>
+        </DataTable>
+
+        <Modal :show="isOpenModalVisible" title="Buka Shift Operasional" @close="isOpenModalVisible = false">
+            <form @submit.prevent="submitOpen" class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-xl mb-4 dark:bg-blue-900/20">
+                    <p class="text-sm text-blue-800 dark:text-blue-300">
+                        Anda akan membuka shift untuk produk: <br>
+                        <span class="font-bold text-lg">{{ selectedProduct?.name }}</span>
+                    </p>
+                </div>
+                <TextInput v-model="openForm.opening_totalizer" type="number" step="0.01" label="Angka Meteran Awal" required :error="openForm.errors.opening_totalizer" />
+                <FileDropzone v-model="openForm.opening_proof" label="Foto Bukti Meteran (Opsional)" accept="image/*" />
+                <div class="pt-4 border-t dark:border-gray-700 flex justify-end gap-3">
+                    <Button type="button" variant="outline" @click="isOpenModalVisible = false">Batal</Button>
+                    <Button type="submit" :processing="openForm.processing">Buka Shift</Button>
+                </div>
+            </form>
+        </Modal>
+
+        <Modal :show="isCloseModalVisible" title="Tutup Shift (Closing)" @close="isCloseModalVisible = false">
+            <form @submit.prevent="submitClose" class="space-y-4">
+                <div class="bg-orange-50 p-4 rounded-xl mb-4 dark:bg-orange-900/20">
+                    <p class="text-sm text-orange-800 dark:text-orange-300">
+                        Menutup shift untuk: <strong>{{ selectedProduct?.name }}</strong><br>
+                        Meter Awal: <span class="font-mono">{{ selectedShift?.opening_totalizer }}</span>
+                    </p>
+                </div>
+                <TextInput v-model="closeForm.closing_totalizer" type="number" step="0.01" label="Angka Meteran Akhir (Wajib)" required :error="closeForm.errors.closing_totalizer" />
+                <TextInput v-model="closeForm.cash_collected" type="number" label="Total Uang Fisik (Cash Drawer)" required :error="closeForm.errors.cash_collected" />
+                <FileDropzone v-model="closeForm.closing_proof" label="Foto Bukti Meteran Akhir (Opsional)" accept="image/*" />
+                <div class="pt-4 border-t dark:border-gray-700 flex justify-end gap-3">
+                    <Button type="button" variant="outline" @click="isCloseModalVisible = false">Batal</Button>
+                    <Button type="submit" variant="danger" :processing="closeForm.processing">Tutup & Simpan</Button>
+                </div>
+            </form>
+        </Modal>
 
     </AdminLayout>
 </template>

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Transaction;
 
 use App\Enums\PaymentMethodEnum;
+use App\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -31,17 +32,11 @@ class StoreTransactionRequest extends FormRequest
             'items.*.quantity_liter' => ['required', 'numeric', 'min:0.01'],
             'payment_method' => ['required', Rule::enum(PaymentMethodEnum::class)],
 
-            'customer_id' => [
-                'nullable',
-                'exists:customers,id',
-                // Jika Bon, Customer Wajib Diisi
-                Rule::requiredIf(fn() => $this->payment_method === PaymentMethodEnum::BON->value)
-            ],
+            'customer_id' => ['required', Rule::exists(Customer::class, 'id')],
 
             'payment_proof' => [
                 'nullable',
                 'image', 'max:5120',
-                // Jika Transfer, Bukti Wajib Diupload
                 Rule::requiredIf(fn() => $this->payment_method === PaymentMethodEnum::TRANSFER->value)
             ],
 
@@ -52,7 +47,7 @@ class StoreTransactionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'customer_id.required_if' => 'Nama Pelanggan wajib dipilih untuk pembayaran Bon/Piutang.',
+            'customer_id.required' => 'Data Pelanggan wajib dipilih untuk setiap transaksi.',
             'payment_proof.required_if' => 'Bukti Transfer wajib diunggah untuk pembayaran via Transfer.',
         ];
     }

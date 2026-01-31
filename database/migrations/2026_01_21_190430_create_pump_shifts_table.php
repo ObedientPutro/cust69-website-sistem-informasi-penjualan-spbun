@@ -14,18 +14,19 @@ return new class extends Migration
         Schema::create('pump_shifts', function (Blueprint $table) {
             $table->id();
             $table->date('date');
-            $table->foreignId('user_id')->constrained();
             $table->foreignId('product_id')->constrained();
 
             // --- FASE 1: BUKA SHIFT (OPEN) ---
             $table->decimal('opening_totalizer', 15, 2);
             $table->string('opening_proof')->nullable();
+            $table->foreignId('opened_by')->constrained('users');
             $table->timestamp('opened_at');
 
             // --- FASE 2: TUTUP SHIFT (CLOSE) ---
             $table->decimal('closing_totalizer', 15, 2)->nullable();
             $table->string('closing_proof')->nullable();
             $table->decimal('cash_collected', 15, 2)->nullable();
+            $table->foreignId('closed_by')->nullable()->constrained('users');
             $table->timestamp('closed_at')->nullable();
 
             // --- FASE 3: REKONSILIASI SISTEM (AUTO) ---
@@ -37,7 +38,6 @@ return new class extends Migration
             // --- FASE 4: AUDIT OWNER (MANUAL) ---
             $table->text('owner_note')->nullable();
             $table->boolean('is_audited')->default(false);
-
             $table->string('status');
             $table->timestamps();
         });
