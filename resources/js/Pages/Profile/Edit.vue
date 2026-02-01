@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AuthenticatedLayout from '@/Layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
 
@@ -12,41 +11,31 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Profile" />
+    <Head title="Pengaturan Akun" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl leading-tight font-semibold text-gray-800 dark:text-gray-200"
-            >
-                Profile
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                Pengaturan Akun
             </h2>
-        </template>
+            <p class="text-sm text-gray-500">
+                Kelola informasi login dan keamanan akun Anda.
+            </p>
+        </div>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <UpdateProfileInformationForm
-                        :must-verify-email="mustVerifyEmail"
-                        :status="status"
-                        class="max-w-xl"
-                    />
-                </div>
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2 items-start">
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <UpdatePasswordForm class="max-w-xl" />
-                </div>
-
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <DeleteUserForm class="max-w-xl" />
-                </div>
+            <div class="space-y-6">
+                <UpdateProfileInformationForm
+                    :must-verify-email="mustVerifyEmail"
+                    :status="status"
+                />
             </div>
+
+            <div class="space-y-6">
+                <UpdatePasswordForm />
+            </div>
+
         </div>
     </AuthenticatedLayout>
 </template>

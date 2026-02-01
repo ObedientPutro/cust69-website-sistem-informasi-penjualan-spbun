@@ -6,6 +6,8 @@ import StockTankList from '@/Components/Dashboard/StockTankList.vue';
 import ChartCard from '@/Components/Metrics/ChartCard.vue';
 import AreaChart from '@/Components/Metrics/AreaChart.vue';
 import Alert from '@/Components/Ui/Alert.vue';
+import { onMounted } from 'vue';
+import { useSweetAlert } from '@/Composables/useSweetAlert';
 
 const props = defineProps<{
     financial: any;
@@ -14,7 +16,17 @@ const props = defineProps<{
     lists: any;
 }>();
 
-// Helper untuk format rupiah di template
+const swal = useSweetAlert();
+
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('verified') == '1') {
+        swal.toast('Email berhasil diverifikasi! Terima kasih.', 'success');
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+});
+
 const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 </script>
 
@@ -22,6 +34,9 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
     <Head title="Executive Dashboard" />
 
     <AdminLayout>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+        </div>
+
         <div class="mb-6">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Kesehatan Bisnis (Real-time)</h2>
             <ExecutiveMetrics :stats="financial" />

@@ -12,6 +12,7 @@ const props = defineProps<{
     success?: boolean;
     disabled?: boolean;
     required?: boolean;
+    readonly?: boolean;
 }>();
 
 const input = ref<HTMLInputElement | null>(null);
@@ -77,6 +78,7 @@ const inputClasses = computed(() => {
                 :placeholder="placeholder"
                 :disabled="disabled"
                 :class="inputClasses"
+                :readonly="readonly"
             />
 
             <div
