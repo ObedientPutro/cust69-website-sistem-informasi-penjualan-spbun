@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Traits\NotificationHelper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -52,7 +54,16 @@ class CustomerService
                 $data['photo'] = $data['photo']->store('customers/photos', 'public');
             }
 
-            return Customer::create($data);
+            $customer = Customer::create($data);
+
+            NotificationHelper::send(
+                'Pelanggan Baru',
+                "Operator " . Auth::user()->name . " mendaftarkan pelanggan baru: {$data['manager_name']} (Kapal: {$data['ship_name']}).",
+                route('customers.index'),
+                'info'
+            );
+
+            return $customer;
         });
     }
 
@@ -72,6 +83,14 @@ class CustomerService
             }
 
             $customer->update($data);
+
+            NotificationHelper::send(
+                'Data Pelanggan Diubah',
+                "Data pelanggan {$customer->manager_name} diperbarui oleh " . Auth::user()->name,
+                route('customers.index'),
+                'info'
+            );
+
             return $customer;
         });
     }

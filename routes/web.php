@@ -3,7 +3,9 @@
 use App\Http\Controllers\Core\CustomerController;
 use App\Http\Controllers\Core\DashboardController;
 use App\Http\Controllers\Core\InventoryController;
+use App\Http\Controllers\Core\NotificationController;
 use App\Http\Controllers\Core\ProductController;
+use App\Http\Controllers\Core\SiteSettingController;
 use App\Http\Controllers\Core\UserController;
 use App\Http\Controllers\History\RestockHistoryController;
 use App\Http\Controllers\History\SoundingHistoryController;
@@ -52,11 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('customers.toggle-status');
 
     // --- OPEN AND CLOSE SHIFT ---
-    Route::middleware(['auth', 'verified'])->group(function () {
-        Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
-        Route::post('/shifts', [ShiftController::class, 'store'])->name('shifts.store');
-        Route::post('/shifts/{shift}/close', [ShiftController::class, 'update'])->name('shifts.close');
-    });
+    Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
+    Route::post('/shifts', [ShiftController::class, 'store'])->name('shifts.store');
+    Route::post('/shifts/{shift}/close', [ShiftController::class, 'update'])->name('shifts.close');
 
     // =====================================================================
     // GROUP 2: OWNER ONLY (SUPER ADMIN)
@@ -109,6 +109,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // CRUD Transaksi (Edit & Hapus & Update Backdate)
         Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.delete');
+
+        // CRUD WEB SETTINGS
+        Route::get('/settings', [SiteSettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [SiteSettingController::class, 'update'])->name('settings.update');
+
+        // OWNER NOTIFICATION
+        Route::get('/notifications/json', [NotificationController::class, 'getJson'])->name('notifications.json');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+        Route::delete('/notifications/clear-read', [NotificationController::class, 'destroyAllRead'])->name('notifications.destroy-read');
+        Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     });
 
 });

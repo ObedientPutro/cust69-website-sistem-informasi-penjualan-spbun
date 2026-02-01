@@ -11,6 +11,7 @@ import {
     PieChartIcon,
     TableIcon,
     SendIcon,
+    SettingsIcon,
 } from '@/Components/Icons';
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
 const page = usePage();
@@ -115,6 +116,17 @@ const menuGroupsRaw = [
                 path: '/reports/stock',
                 roles: ['owner'],
             },
+        ],
+    },
+    {
+        title: 'Pengaturan',
+        items: [
+            {
+                icon: SettingsIcon,
+                name: 'Pengaturan Website',
+                path: route('settings.index'),
+                roles: ['owner'],
+            }
         ],
     },
 ];

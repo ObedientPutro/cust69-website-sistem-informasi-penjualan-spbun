@@ -1,3 +1,41 @@
+<script setup lang="ts">
+import ThemeToggler from '@/Components/Common/ThemeToggler.vue';
+import { useSidebar } from '@/Composables/useSidebar';
+import {computed, ref} from 'vue';
+import HeaderLogo from './header/HeaderLogo.vue';
+import NotificationMenu from './header/NotificationMenu.vue';
+import SearchBar from './header/SearchBar.vue';
+import UserMenu from './header/UserMenu.vue';
+import { usePage } from '@inertiajs/vue3';
+
+const { toggleSidebar, toggleMobileSidebar, isMobileOpen } = useSidebar();
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
+const handleToggle = () => {
+    if (window.innerWidth >= 1024) {
+        toggleSidebar();
+    } else {
+        toggleMobileSidebar();
+    }
+};
+
+const dropdownOpen = ref(false);
+const notifying = ref(false);
+
+const toggleDropdown = () => {
+    dropdownOpen.value = !dropdownOpen.value;
+    notifying.value = false;
+};
+
+const isApplicationMenuOpen = ref(false);
+
+const toggleApplicationMenu = () => {
+    isApplicationMenuOpen.value = !isApplicationMenuOpen.value;
+};
+</script>
+
 <template>
     <header
         class="sticky top-0 z-99999 flex w-full border-gray-200 bg-white lg:border-b dark:border-gray-800 dark:bg-gray-900"
@@ -78,44 +116,10 @@
             >
                 <div class="2xsm:gap-3 flex items-center gap-2">
                     <ThemeToggler />
-                    <NotificationMenu />
+                    <NotificationMenu v-if="user.role == 'owner'"/>
                 </div>
                 <UserMenu />
             </div>
         </div>
     </header>
 </template>
-
-<script setup lang="ts">
-import ThemeToggler from '@/Components/Common/ThemeToggler.vue';
-import { useSidebar } from '@/Composables/useSidebar';
-import { ref } from 'vue';
-import HeaderLogo from './header/HeaderLogo.vue';
-import NotificationMenu from './header/NotificationMenu.vue';
-import SearchBar from './header/SearchBar.vue';
-import UserMenu from './header/UserMenu.vue';
-
-const { toggleSidebar, toggleMobileSidebar, isMobileOpen } = useSidebar();
-
-const handleToggle = () => {
-    if (window.innerWidth >= 1024) {
-        toggleSidebar();
-    } else {
-        toggleMobileSidebar();
-    }
-};
-
-const dropdownOpen = ref(false);
-const notifying = ref(false);
-
-const toggleDropdown = () => {
-    dropdownOpen.value = !dropdownOpen.value;
-    notifying.value = false;
-};
-
-const isApplicationMenuOpen = ref(false);
-
-const toggleApplicationMenu = () => {
-    isApplicationMenuOpen.value = !isApplicationMenuOpen.value;
-};
-</script>

@@ -28,7 +28,7 @@ export function useSweetAlert() {
     const confirm = (
         title: string,
         text: string,
-        confirmText: string = 'Yes, delete it!',
+        confirmText: string = 'Ya, hapus',
     ) => {
         return Swal.fire({
             title: title,

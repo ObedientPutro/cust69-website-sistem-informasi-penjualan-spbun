@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Traits\NotificationHelper;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class TransactionService
                 ];
             }
 
-            if ($data['payment_method'] === PaymentMethodEnum::BON->value) {
+            if ($data['payment_method'] == PaymentMethodEnum::BON->value) {
                 $customer = Customer::where('id', $data['customer_id'])->lockForUpdate()->firstOrFail();
 
                 if (!$customer->is_active) {
@@ -59,7 +60,7 @@ class TransactionService
                 $customer->decrement('credit_limit', $grandTotal);
             }
 
-            if ($user->role !== UserRoleEnum::OWNER->value) {
+            if ($user->role != UserRoleEnum::OWNER->value) {
                 $transactionDate = Carbon::now();
             } else {
                 $inputDate = Carbon::parse($data['transaction_date']);
@@ -67,11 +68,11 @@ class TransactionService
             }
 
             $proofPath = null;
-            if ($data['payment_method'] === PaymentMethodEnum::TRANSFER->value && $fileProof) {
+            if ($data['payment_method'] == PaymentMethodEnum::TRANSFER->value && $fileProof) {
                 $proofPath = $fileProof->store('payment_proofs', 'public');
             }
 
-            $paymentStatus = ($data['payment_method'] === PaymentMethodEnum::BON->value)
+            $paymentStatus = ($data['payment_method'] == PaymentMethodEnum::BON->value)
                 ? PaymentStatusEnum::UNPAID
                 : PaymentStatusEnum::PAID;
 
@@ -98,7 +99,24 @@ class TransactionService
                 ]);
 
                 $payload['product']->decrement('stock', $payload['quantity_liter']);
+
+                $newStock = $payload['product']->stock;
+                if ($newStock < 500) {
+                    NotificationHelper::send(
+                        'Stok Menipis!',
+                        "Perhatian! Stok {$payload['product']->name} tersisa " . number_format($newStock) . " Liter.",
+                        route('products.index'),
+                        'error'
+                    );
+                }
             }
+
+            NotificationHelper::send(
+                'Transaksi Baru',
+                "Penjualan ID #{$transaction->id} oleh " . Auth::user()->name . ". Total: Rp " . number_format($transaction->grand_total),
+                route('transactions.create'),
+                'success'
+            );
 
             return $transaction;
         });

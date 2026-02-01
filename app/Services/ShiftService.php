@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PumpShiftStatusEnum;
 use App\Models\PumpShift;
+use App\Traits\NotificationHelper;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -33,7 +34,7 @@ class ShiftService
                 $proofPath = $data['opening_proof']->store('shifts/opening', 'public');
             }
 
-            return PumpShift::create([
+            $shift = PumpShift::create([
                 'date' => Carbon::now(),
                 'product_id' => $data['product_id'],
                 'opened_by' => Auth::id(),
@@ -42,6 +43,15 @@ class ShiftService
                 'opened_at' => Carbon::now(),
                 'status' => PumpShiftStatusEnum::OPEN->value,
             ]);
+
+            NotificationHelper::send(
+                'Shift Dibuka',
+                Auth::user()->name . " baru saja membuka shift untuk produk {$shift->product->name} dengan meteran awal " . number_format($shift->opening_totalizer),
+                route('shifts.index'),
+                'success'
+            );
+
+            return $shift;
         });
     }
 
@@ -74,6 +84,13 @@ class ShiftService
                 'total_sales_liter' => $literSold,
                 'status' => PumpShiftStatusEnum::CLOSED->value,
             ]);
+
+            NotificationHelper::send(
+                'Shift Ditutup',
+                Auth::user()->name . " menutup shift {$shift->product->name}. Total Liter: " . number_format($literSold) . "L. Cash: Rp " . number_format($data['cash_collected']),
+                route('shifts.index'),
+                'warning'
+            );
 
             return $shift;
         });
