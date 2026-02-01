@@ -23,10 +23,11 @@ const identityForm = useForm({
     _method: 'PUT',
     site_name: props.settings?.site_name || '',
     address: props.settings?.address || '',
+    phone: props.settings?.phone || '',
+    public_email: props.settings?.public_email || '',
     logo_left: null as File | null,
     logo_right: null as File | null,
 });
-
 // Previews
 const logoLeftPreview = ref(props.settings?.logo_left_url);
 const logoRightPreview = ref(props.settings?.logo_right_url);
@@ -154,6 +155,21 @@ const updateWebStatus = (status: boolean) => {
                         required
                         :error="identityForm.errors.site_name"
                     />
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <TextInput
+                            v-model="identityForm.phone"
+                            label="Nomor Telepon (KOP)"
+                            placeholder="021-xxxxxx"
+                            :error="identityForm.errors.phone"
+                        />
+                        <TextInput
+                            v-model="identityForm.public_email"
+                            label="Email Publik (KOP)"
+                            placeholder="contact@spbu.com"
+                            :error="identityForm.errors.public_email"
+                        />
+                    </div>
 
                     <TextArea
                         v-model="identityForm.address"

@@ -12,6 +12,7 @@ import {
     TableIcon,
     SendIcon,
     SettingsIcon,
+    BoxIcon,
 } from '@/Components/Icons';
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
 const page = usePage();
@@ -111,7 +112,7 @@ const menuGroupsRaw = [
                 roles: ['owner'],
             },
             {
-                icon: DocsIcon,
+                icon: BoxIcon,
                 name: 'Laporan Stok',
                 path: '/reports/stock',
                 roles: ['owner'],

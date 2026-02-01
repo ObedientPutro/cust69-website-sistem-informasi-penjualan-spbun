@@ -5,7 +5,7 @@ namespace App\Http\Controllers\History;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\TransactionService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\ExportHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,6 +37,12 @@ class TransactionHistoryController extends Controller
             'total_transaksi' => (clone $query)->count(),
         ];
 
+        if ($request->has('sort') && $request->has('direction')) {
+            $query->orderBy($request->sort, $request->direction);
+        } else {
+            $query->latest('transaction_date');
+        }
+
         return Inertia::render('History/TransactionHistory', [
             'transactions' => $query->paginate(15)->withQueryString(),
             'products' => Product::select('id', 'name')->orderBy('name')->get(),
@@ -62,30 +68,32 @@ class TransactionHistoryController extends Controller
         $format = $request->input('format', 'csv');
 
         $query = $this->transactionService->getHistory($filters);
-        $data = $query->get();
 
-        if ($format === 'pdf') {
-            $pdf = Pdf::loadView('exports.transactions_pdf', [
-                'transactions' => $data,
-                'period' => $filters['start_date'] . ' s/d ' . $filters['end_date']
-            ])->setPaper('a4', 'landscape');
-
-            return $pdf->download('Laporan_Transaksi_' . date('Ymd_His') . '.pdf');
+        if ($request->has('sort') && $request->has('direction')) {
+            $query->orderBy($request->sort, $request->direction);
+        } else {
+            $query->orderBy('transaction_date', 'asc');
         }
 
-        // CSV Stream
-        $fileName = 'Laporan_Transaksi_' . date('Ymd_His') . '.csv';
-        return response()->streamDownload(function () use ($data) {
-            $handle = fopen('php://output', 'w');
+        $period = $filters['start_date'] . ' s/d ' . $filters['end_date'];
 
-            // Header CSV
-            fputcsv($handle, ['Tgl', 'Ref ID', 'Customer', 'Items', 'Total', 'Metode', 'Status', 'Kasir']);
+        if ($format == 'pdf') {
+            return ExportHelper::toPdf(
+                'exports.histories.transactions_pdf',
+                ['transactions' => $query->get(), 'title' => 'Laporan Transaksi Penjualan', 'period' => $period],
+                'Laporan_Transaksi_' . date('Ymd_His') . '.pdf'
+            );
+        }
 
-            foreach ($data as $row) {
-                // Format Items menjadi string: "Pertalite (2L), Solar (5L)"
+        return ExportHelper::toCsv(
+            'Laporan_Transaksi_' . date('Ymd_His') . '.csv',
+            ['Tgl', 'Ref ID', 'Customer', 'Items', 'Total', 'Metode', 'Status', 'Kasir'],
+            $query,
+            function ($row) {
+                // Logic string building items
                 $itemsString = $row->items->map(fn($i) => $i->product->name . ' (' . $i->quantity_liter . 'L)')->join(', ');
 
-                fputcsv($handle, [
+                return [
                     $row->transaction_date->format('Y-m-d H:i'),
                     '#' . $row->id,
                     $row->customer ? $row->customer->name : 'Umum',
@@ -94,9 +102,10 @@ class TransactionHistoryController extends Controller
                     $row->payment_method->value,
                     $row->payment_status->value,
                     $row->user->name
-                ]);
+                ];
             }
-            fclose($handle);
-        }, $fileName);
+        );
     }
+
+
 }

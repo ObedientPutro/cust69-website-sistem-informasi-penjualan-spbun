@@ -5,7 +5,7 @@ namespace App\Http\Controllers\History;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Restock;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\ExportHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -47,6 +47,12 @@ class RestockHistoryController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        if ($request->has('sort') && $request->has('direction')) {
+            $query->orderBy($request->sort, $request->direction);
+        } else {
+            $query->latest('date');
+        }
+
         return Inertia::render('History/RestockHistory', [
             'logs' => $logs,
             'summary' => $summary,
@@ -70,38 +76,38 @@ class RestockHistoryController extends Controller
         $query = Restock::with(['product', 'user'])->whereBetween('date', [$startDate, $endDate]);
         if ($productId) $query->where('product_id', $productId);
 
-        if ($format === 'pdf') {
-            $data = $query->orderBy('date', 'asc')->get(); // Get all data
-            $pdf = Pdf::loadView('exports.restocks_pdf', [
-                'logs' => $data,
-                'start_date' => $startDate,
-                'end_date' => $endDate
-            ]);
-            return $pdf->download("Laporan_Restock_{$startDate}.pdf");
+        if ($request->has('sort') && $request->has('direction')) {
+            $query->orderBy($request->sort, $request->direction);
+        } else {
+            $query->orderBy('date', 'asc');
         }
 
-        $fileName = "Restock_DO_{$startDate}_{$endDate}.csv";
+        $period = $startDate . ' s/d ' . $endDate;
 
-        return response()->streamDownload(function () use ($startDate, $endDate, $productId) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Tanggal', 'No. DO / Ref', 'Produk', 'Volume (L)', 'Total Harga (Rp)', 'Admin']);
+        if ($format == 'pdf') {
+            return ExportHelper::toPdf(
+                'exports.histories.restocks_pdf',
+                ['logs' => $query->get(), 'title' => 'Laporan Penebusan DO (Restock)', 'period' => $period],
+                "Laporan_Restock_{$startDate}.pdf"
+            );
+        }
 
-            $query = Restock::with(['product', 'user'])->whereBetween('date', [$startDate, $endDate]);
-            if ($productId) $query->where('product_id', $productId);
-
-            $query->chunk(200, function ($rows) use ($handle) {
-                foreach ($rows as $row) {
-                    fputcsv($handle, [
-                        $row->date->format('Y-m-d'),
-                        $row->note ?? '-',
-                        $row->product->name,
-                        $row->volume_liter,
-                        $row->total_cost,
-                        $row->user->name
-                    ]);
-                }
-            });
-            fclose($handle);
-        }, $fileName);
+        return ExportHelper::toCsv(
+            "Restock_DO_{$startDate}.csv",
+            ['Tanggal', 'No. DO / Ref', 'Produk', 'Volume (L)', 'Total Harga (Rp)', 'Admin'],
+            $query,
+            function ($row) { // Mapper Function
+                return [
+                    $row->date->format('Y-m-d'),
+                    $row->note ?? '-',
+                    $row->product->name,
+                    $row->volume_liter,
+                    $row->total_cost,
+                    $row->user->name
+                ];
+            }
+        );
     }
+
+
 }

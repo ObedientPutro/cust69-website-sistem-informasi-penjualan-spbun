@@ -25,12 +25,11 @@ class UpdateSiteSettingRequest extends FormRequest
         return [
             'site_name' => ['sometimes', 'required', 'string', 'max:255'],
             'address' => ['sometimes', 'required', 'string', 'max:500'],
-
+            'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'public_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'notification_email' => ['sometimes', 'required', 'email', 'max:255'],
-
             'enable_email_notification' => ['sometimes', 'boolean'],
             'enable_web_notification' => ['sometimes', 'boolean'],
-
             'logo_left' => ['nullable', 'image', 'max:2048'],
             'logo_right' => ['nullable', 'image', 'max:2048'],
         ];

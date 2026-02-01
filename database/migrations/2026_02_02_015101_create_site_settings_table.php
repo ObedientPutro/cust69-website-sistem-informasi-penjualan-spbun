@@ -16,6 +16,8 @@ return new class extends Migration
             // --- IDENTITAS KOP SURAT ---
             $table->string('site_name')->default('SPBU-N NO. 7895101');
             $table->text('address')->default('Tumumpa Dua, Manado City, North Sulawesi');
+            $table->string('phone')->nullable();
+            $table->string('public_email')->nullable();
             $table->string('logo_left')->nullable();
             $table->string('logo_right')->nullable();
 
