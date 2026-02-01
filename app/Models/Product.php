@@ -46,4 +46,10 @@ class Product extends Model
     {
         return $this->hasMany(ProductPriceHistory::class);
     }
+
+    public function productPumpShiftHistories(): HasMany
+    {
+        return $this->hasMany(PumpShift::class);
+    }
+
 }

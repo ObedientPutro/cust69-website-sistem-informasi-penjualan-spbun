@@ -6,15 +6,19 @@ import DatePicker from '@/Components/FormElements/DatePicker.vue';
 import Button from '@/Components/Ui/Button.vue';
 import MetricCard from '@/Components/Metrics/MetricCard.vue';
 import Badge from '@/Components/Ui/Badge.vue';
+import SelectInput from '@/Components/FormElements/SelectInput.vue';
+import { RefreshIcon, BoxIcon, DocsIcon } from '@/Components/Icons';
 
 const props = defineProps<{
     data: any[];
     filters: any;
+    products: any[];
 }>();
 
 const form = ref({
     start_date: props.filters.start_date,
     end_date: props.filters.end_date,
+    product_id: props.filters.product_id || '',
 });
 
 // Auto-reload
@@ -59,6 +63,16 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                 <span class="text-gray-400">-</span>
                 <div class="w-36"><DatePicker v-model="form.end_date" placeholder="Sampai" /></div>
 
+                <div class="w-48">
+                    <SelectInput
+                        v-model="form.product_id"
+                        :options="[
+                            { value: '', label: 'Semua Produk' },
+                            ...products.map(p => ({value: p.id, label: p.name}))
+                        ]"
+                    />
+                </div>
+
                 <div class="h-8 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
 
                 <Button size="sm" variant="outline" @click="exportData('csv')">CSV</Button>
@@ -76,7 +90,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                 title="Total Masuk (Restock)"
                 :value="summary.in + ' L'"
                 color="success"
-                :icon="null"
+                :icon="RefreshIcon"
             >
                 <template #icon><span class="text-2xl">📥</span></template>
             </MetricCard>
@@ -84,7 +98,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                 title="Total Keluar (Jual)"
                 :value="summary.out + ' L'"
                 color="warning"
-                :icon="null"
+                :icon="BoxIcon"
             >
                 <template #icon><span class="text-2xl">📤</span></template>
             </MetricCard>
@@ -92,6 +106,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                 title="Selisih (Net Flow)"
                 :value="(summary.net > 0 ? '+' : '') + summary.net + ' L'"
                 :color="summary.net >= 0 ? 'primary' : 'error'"
+                :icon="DocsIcon"
             />
         </div>
 

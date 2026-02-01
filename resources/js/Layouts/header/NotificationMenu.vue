@@ -111,7 +111,7 @@ const getIconColor = (type: string) => {
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
     fetchNotifications();
-    setInterval(fetchNotifications, 10000);
+    setInterval(fetchNotifications, 100000);
 });
 
 onUnmounted(() => {

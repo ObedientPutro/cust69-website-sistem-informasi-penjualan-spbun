@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\SiteSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportHelper
@@ -30,24 +31,29 @@ class ExportHelper
      * @param Builder $query Query Builder (belum di-get)
      * @param callable $rowMapper Function untuk memetakan object database ke array CSV
      */
-    public static function toCsv(string $filename, array $headers, Builder $query, callable $rowMapper): StreamedResponse
+    public static function toCsv(string $filename, array $headers, Builder|Collection $data, callable $rowMapper): StreamedResponse
     {
-        return response()->streamDownload(function () use ($headers, $query, $rowMapper) {
+        return response()->streamDownload(function () use ($headers, $data, $rowMapper) {
             $handle = fopen('php://output', 'w');
-
-            // Tulis Header
             fputcsv($handle, $headers);
 
-            // Chunking Data (Hemat RAM)
-            $query->chunk(500, function ($rows) use ($handle, $rowMapper) {
-                foreach ($rows as $row) {
-                    // Panggil fungsi mapper yang dikirim dari controller
-                    $csvRow = $rowMapper($row);
-                    fputcsv($handle, $csvRow);
+            if ($data instanceof Builder) {
+                // Jika Query Builder, pakai Chunking (Hemat RAM)
+                $data->chunk(500, function ($rows) use ($handle, $rowMapper) {
+                    foreach ($rows as $row) {
+                        fputcsv($handle, $rowMapper($row));
+                    }
+                });
+            } else {
+                // Jika Collection, loop langsung
+                foreach ($data as $row) {
+                    fputcsv($handle, $rowMapper($row));
                 }
-            });
+            }
 
             fclose($handle);
         }, $filename);
     }
+
+
 }

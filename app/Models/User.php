@@ -89,4 +89,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(ProductPriceHistory::class);
     }
+
+    public function openedPumpShift(): HasMany
+    {
+        return $this->hasMany(PumpShift::class);
+    }
+
+    public function closedPumpShift(): HasMany
+    {
+        return $this->hasMany(PumpShift::class);
+    }
+
 }
