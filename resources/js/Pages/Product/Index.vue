@@ -594,7 +594,7 @@ const toggleStatus = (product: any) => {
                         placeholder="Opsional"
                     />
                     <DecimalInput
-                        v-model="formSounding.errors.physical_liter"
+                        v-model="formSounding.physical_liter"
                         label="Volume Fisik (Liter)"
                         placeholder="0.00"
                         suffix="Liter"

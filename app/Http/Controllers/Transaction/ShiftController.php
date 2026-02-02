@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Transaction;
 
 use App\Enums\PumpShiftStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Shift\AuditShiftRequest;
 use App\Http\Requests\Shift\CloseShiftRequest;
 use App\Http\Requests\Shift\OpenShiftRequest;
 use App\Models\Product;
@@ -134,5 +135,18 @@ class ShiftController extends Controller
     public function destroy(string $id)
     {
         redirect(route('dashboard'));
+    }
+
+    /**
+     * Audit Shift (Owner Only)
+     */
+    public function audit(AuditShiftRequest $request, PumpShift $shift)
+    {
+        try {
+            $this->shiftService->auditShift($shift, $request->owner_note);
+            return redirect()->back()->with('success', 'Shift berhasil diaudit dan catatan tersimpan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal audit: ' . $e->getMessage());
+        }
     }
 }

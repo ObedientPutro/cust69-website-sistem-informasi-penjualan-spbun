@@ -74,7 +74,6 @@
 
         @foreach($data as $row)
             @php
-                // PERBAIKAN KEY DISINI (sys_total & diff_liter)
                 $grandOmset += $row['sys_total'];
                 $grandDiff += $row['diff_liter'];
             @endphp
@@ -122,6 +121,14 @@
                                         <td class="right bold">{{ number_format($s->total_sales_liter, 2, ',', '.') }}</td>
                                         <td class="right">{{ number_format($s->cash_collected, 0, ',', '.') }}</td>
                                     </tr>
+                                    {{-- REVISI: Tampilkan Catatan Audit di PDF --}}
+                                    @if($s->is_audited && !empty($s->owner_note))
+                                        <tr>
+                                            <td colspan="5" style="background-color: #fff3cd; border-bottom: 1px solid #ffeeba; padding: 4px 8px; color: #856404; font-size: 7pt; font-style: italic;">
+                                                <strong>[AUDIT OWNER]:</strong> {{ $s->owner_note }}
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                                 </tbody>
                             </table>
@@ -185,8 +192,9 @@
 
     <div style="margin-top: 20px; font-size: 8pt; color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px;">
         <strong>Catatan Laporan:</strong><br>
-        1. Data <strong>Fisik</strong> diambil dari laporan Shift Operator (Totalisator & Uang di Laci).<br>
-        2. Data <strong>Sistem</strong> diambil dari input Transaksi Kasir.<br>
-        3. Selisih Liter > 5L akan ditandai Merah (Perlu investigasi).
+        1. Laporan ini menampilkan <strong>Penjualan Bersih (Net Sales)</strong>. Transaksi "Return/Void" tidak dihitung.<br>
+        2. Data <strong>Fisik</strong> diambil dari laporan Shift Operator (Totalisator & Uang di Laci).<br>
+        3. Data <strong>Sistem</strong> diambil dari input Transaksi Kasir yang valid (Lunas/Bon).<br>
+        4. Selisih Liter > 5L akan ditandai Merah (Perlu investigasi, kemungkinan kebocoran atau tera ulang).
     </div>
 @endsection

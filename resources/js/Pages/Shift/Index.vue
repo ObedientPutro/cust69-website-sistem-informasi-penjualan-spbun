@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
+import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { debounce, pickBy } from 'lodash';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DataTable from '@/Components/Tables/DataTable.vue';
 import Button from '@/Components/Ui/Button.vue';
 import TextInput from '@/Components/FormElements/TextInput.vue';
+import TextArea from '@/Components/FormElements/TextArea.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
 import DatePicker from '@/Components/FormElements/DatePicker.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
@@ -16,21 +17,23 @@ import { useSweetAlert } from '@/Composables/useSweetAlert';
 const props = defineProps<{
     products: any[];
     activeShifts: Record<string, any>;
-    history: any; // Paginator Object
-    filters: any; // Filter Object
+    history: any;
+    filters: any;
 }>();
 
+const page = usePage();
 const swal = useSweetAlert();
+const isOwner = computed(() => page.props.auth.user.role === 'owner');
 
 // --- CONFIG DATA TABLE ---
 const columns = [
     { label: 'Waktu / Tanggal', key: 'opened_at', sortable: true, align: 'left' },
-    { label: 'Produk', key: 'product', sortable: false, align: 'left' },
+    { label: 'Produk', key: 'product', sortable: false, align: 'center' },
     { label: 'Petugas', key: 'opener', sortable: false, align: 'left' },
-    { label: 'Meter Awal', key: 'opening_totalizer', sortable: true, align: 'right' },
-    { label: 'Meter Akhir', key: 'closing_totalizer', sortable: true, align: 'right' },
-    { label: 'Terjual (L)', key: 'total_sales_liter', sortable: true, align: 'right' },
+    { label: 'Meteran', key: 'totalizers', sortable: false, align: 'left' },
+    { label: 'Rekonsiliasi (Fisik vs Sys)', key: 'reconciliation', sortable: false, align: 'center' },
     { label: 'Status', key: 'status', sortable: true, align: 'center' },
+    { label: 'Aksi', key: 'actions', sortable: false, align: 'center' },
 ];
 
 const filterForm = ref({
@@ -104,6 +107,45 @@ const submitClose = () => {
         },
         onError: () => swal.toast('Gagal menutup shift', 'error')
     });
+};
+
+const isAuditModalVisible = ref(false);
+const auditForm = useForm({ owner_note: '' });
+const shiftToAudit = ref<any>(null);
+
+const getDiff = (row: any) => {
+    if (row.status !== 'closed') return 0;
+    return Math.abs(parseFloat(row.total_sales_liter) - parseFloat(row.system_transaction_liter));
+};
+
+const needsAudit = (row: any) => {
+    return row.status === 'closed' && !row.is_audited && getDiff(row) > 1; // Toleransi 1 Liter
+};
+
+const openAuditModal = (row: any) => {
+    shiftToAudit.value = row;
+    auditForm.reset();
+    isAuditModalVisible.value = true;
+};
+
+const submitAudit = () => {
+    auditForm.put(route('shifts.audit', shiftToAudit.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isAuditModalVisible.value = false;
+            swal.toast('Shift berhasil diaudit', 'success');
+        }
+    });
+};
+
+const isNoteModalVisible = ref(false);
+const selectedNote = ref('');
+const selectedShiftInfo = ref('');
+
+const openNoteModal = (row: any) => {
+    selectedNote.value = row.owner_note;
+    selectedShiftInfo.value = `${row.product?.name} (${formatDate(row.opened_at)})`;
+    isNoteModalVisible.value = true;
 };
 
 // --- HELPER ---
@@ -197,76 +239,120 @@ const formatNumber = (num: number | string) => {
             <h3 class="text-lg font-bold text-gray-800 dark:text-white">Riwayat Aktivitas Shift</h3>
         </div>
 
-        <DataTable
-            :rows="history.data"
-            :columns="columns"
-            :pagination="history"
-            :filters="filters"
-            :enable-actions="false"
-        >
-            <template #filters>
-                <div class="flex flex-col md:flex-row gap-3 w-full">
-                    <div class="flex gap-2 w-full md:w-auto">
-                        <div class="w-32"><DatePicker v-model="filterForm.start_date" placeholder="Mulai" /></div>
-                        <div class="w-32"><DatePicker v-model="filterForm.end_date" placeholder="Sampai" /></div>
-                    </div>
-
-                    <div class="w-full md:w-48">
-                        <SelectInput v-model="filterForm.product_id" class="text-sm w-full">
-                            <option value="">Semua Produk</option>
-                            <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                        </SelectInput>
-                    </div>
-                </div>
-            </template>
-
+        <DataTable :rows="history.data" :columns="columns" :pagination="history" :filters="filters" :enable-actions="false">
             <template #cell-opened_at="{ row }">
                 <div class="text-sm">
                     <span class="block font-medium text-gray-800 dark:text-white">{{ formatDate(row.opened_at) }}</span>
-                    <span v-if="row.closed_at" class="text-xs text-gray-500">
-                        Tutup: {{ formatDate(row.closed_at) }}
-                    </span>
+                    <span v-if="row.closed_at" class="text-xs text-gray-500">Tutup: {{ formatDate(row.closed_at) }}</span>
                 </div>
             </template>
 
-            <template #cell-product="{ row }">
-                <span class="font-bold text-gray-700 dark:text-gray-300">{{ row.product?.name }}</span>
-            </template>
+            <template #cell-product="{ row }"><span class="font-bold text-gray-700 dark:text-gray-300">{{ row.product?.name }}</span></template>
 
             <template #cell-opener="{ row }">
                 <div class="flex flex-col text-xs gap-1">
-                    <div class="flex items-center gap-1">
-                        <span class="w-8 text-gray-400">Buka:</span>
-                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ row.opener?.name }}</span>
-                    </div>
-                    <div v-if="row.closer" class="flex items-center gap-1">
-                        <span class="w-8 text-gray-400">Tutup:</span>
-                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ row.closer?.name }}</span>
-                    </div>
+                    <div class="flex items-center gap-1"><span class="w-8 text-gray-400">Buka:</span><span class="font-medium">{{ row.opener?.name }}</span></div>
+                    <div v-if="row.closer" class="flex items-center gap-1"><span class="w-8 text-gray-400">Tutup:</span><span class="font-medium">{{ row.closer?.name }}</span></div>
                 </div>
             </template>
 
-            <template #cell-opening_totalizer="{ row }">
-                <span class="font-mono text-gray-600 dark:text-gray-400">{{ formatNumber(row.opening_totalizer) }}</span>
+            <template #cell-totalizers="{ row }">
+                <div class="text-xs text-right">
+                    <div><span class="text-gray-400">Aw:</span> <span class="font-mono">{{ formatNumber(row.opening_totalizer) }}</span></div>
+                    <div v-if="row.closing_totalizer"><span class="text-gray-400">Ak:</span> <span class="font-mono">{{ formatNumber(row.closing_totalizer) }}</span></div>
+                </div>
             </template>
 
-            <template #cell-closing_totalizer="{ row }">
-                <span class="font-mono text-gray-600 dark:text-gray-400">{{ row.closing_totalizer ? formatNumber(row.closing_totalizer) : '-' }}</span>
-            </template>
+            <template #cell-reconciliation="{ row }">
+                <div v-if="row.status === 'closed'" class="flex flex-col items-center gap-1.5 w-full">
 
-            <template #cell-total_sales_liter="{ row }">
-                <span v-if="row.total_sales_liter > 0" class="font-bold font-mono text-gray-800 dark:text-white">
-                    {{ formatNumber(row.total_sales_liter) }}
-                </span>
-                <span v-else class="-">-</span>
+                    <div class="flex justify-between items-center w-full text-xs px-2">
+                        <div class="flex flex-col items-start">
+                            <span class="text-[10px] text-gray-400 uppercase font-bold">Fisik (Mesin)</span>
+                            <span class="font-bold text-gray-700 dark:text-gray-300" title="Meter Akhir - Awal">
+                                {{ formatNumber(row.total_sales_liter) }}
+                            </span>
+                        </div>
+
+                        <span class="text-gray-300 mx-1">vs</span>
+
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] text-gray-400 uppercase font-bold">Sistem (POS)</span>
+                            <span class="font-bold text-blue-600">
+                                {{ formatNumber(row.system_transaction_liter) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div v-if="Math.abs(getDiff(row)) > 1" class="w-full text-center">
+                        <div class="inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-bold w-full justify-center"
+                             :class="getDiff(row) > 0
+                                ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                : 'bg-red-50 text-red-700 border-red-200'">
+
+                            <span v-if="getDiff(row) > 0">⚠ Lebih: {{ formatNumber(getDiff(row)) }} L</span>
+                            <span v-else>⚠ Kurang: {{ formatNumber(Math.abs(getDiff(row))) }} L</span>
+                        </div>
+                    </div>
+
+                    <div v-else class="w-full text-center">
+                        <div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-50 border border-green-200 text-green-700 text-xs font-bold w-full justify-center">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Match
+                        </div>
+                    </div>
+
+                </div>
+                <span v-else class="text-xs text-gray-400 italic">Shift Berjalan...</span>
             </template>
 
             <template #cell-status="{ row }">
-                <Badge :color="row.status === 'open' ? 'success' : 'secondary'" class="text-[10px] uppercase">
-                    {{ row.status }}
-                </Badge>
+                <div class="flex flex-col gap-1 items-center">
+                    <Badge :color="row.status === 'open' ? 'success' : 'secondary'" class="text-[10px] uppercase">{{ row.status }}</Badge>
+                    <Badge v-if="row.is_audited" color="primary" class="text-[10px]">Audited</Badge>
+                </div>
+            </template>
+
+            <template #cell-actions="{ row }">
+                <Button
+                    v-if="isOwner && needsAudit(row)"
+                    variant="danger"
+                    @click="openAuditModal(row)"
+                    class="whitespace-nowrap"
+                >
+                    ⚠ Audit Sekarang
+                </Button>
+                <button
+                    v-if="row.is_audited"
+                    @click="openNoteModal(row)"
+                    class="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition"
+                    title="Lihat Catatan Audit"
+                >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Lihat Catatan
+                </button>
             </template>
         </DataTable>
+
+        <Modal :show="isNoteModalVisible" title="Catatan Audit Owner" @close="isNoteModalVisible = false" maxWidth="md">
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-3 rounded-lg border dark:bg-gray-800 dark:border-gray-700">
+                    <p class="text-xs text-gray-500 uppercase font-bold">Shift</p>
+                    <p class="font-medium text-gray-800 dark:text-white">{{ selectedShiftInfo }}</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Isi Catatan:</label>
+                    <div class="p-4 bg-yellow-50 text-yellow-900 rounded-xl border border-yellow-200 text-sm leading-relaxed whitespace-pre-wrap dark:bg-yellow-900/20 dark:text-yellow-100 dark:border-yellow-800">
+                        {{ selectedNote }}
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <Button type="button" variant="outline" @click="isNoteModalVisible = false">Tutup</Button>
+                </div>
+            </div>
+        </Modal>
 
         <Modal :show="isOpenModalVisible" title="Buka Shift Operasional" @close="isOpenModalVisible = false">
             <form @submit.prevent="submitOpen" class="space-y-4">
@@ -301,6 +387,44 @@ const formatNumber = (num: number | string) => {
                     <Button type="submit" variant="danger" :processing="closeForm.processing">Tutup & Simpan</Button>
                 </div>
             </form>
+        </Modal>
+
+        <Modal :show="isAuditModalVisible" title="Audit Selisih Shift" @close="isAuditModalVisible = false">
+            <div v-if="shiftToAudit" class="space-y-4">
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100 dark:bg-red-900/20 dark:border-red-800">
+                    <h4 class="font-bold text-red-800 dark:text-red-300 mb-2">Terdeteksi Selisih Volume!</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="block text-gray-500">Penjualan Fisik (Mesin):</span>
+                            <span class="font-mono font-bold text-gray-800 dark:text-white text-lg">{{ formatNumber(shiftToAudit.total_sales_liter) }} L</span>
+                        </div>
+                        <div>
+                            <span class="block text-gray-500">Tercatat di Sistem:</span>
+                            <span class="font-mono font-bold text-blue-600 text-lg">{{ formatNumber(shiftToAudit.system_transaction_liter) }} L</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-red-200 dark:border-red-700 flex justify-between items-center">
+                        <span class="text-red-700 font-bold">Total Selisih:</span>
+                        <span class="text-xl font-black text-red-600">{{ formatNumber(getDiff(shiftToAudit)) }} Liter</span>
+                    </div>
+                </div>
+
+                <form @submit.prevent="submitAudit" class="space-y-4">
+                    <TextArea
+                        v-model="auditForm.owner_note"
+                        label="Catatan Audit (Wajib)"
+                        placeholder="Jelaskan penyebab selisih (misal: kebocoran selang, tera ulang, atau kelalaian petugas)..."
+                        required
+                        rows="3"
+                        :error="auditForm.errors.owner_note"
+                    />
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <Button type="button" variant="outline" @click="isAuditModalVisible = false">Batal</Button>
+                        <Button type="submit" variant="primary" :processing="auditForm.processing">Simpan & Selesaikan Audit</Button>
+                    </div>
+                </form>
+            </div>
         </Modal>
 
     </AdminLayout>

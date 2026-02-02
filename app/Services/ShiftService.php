@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PumpShiftStatusEnum;
 use App\Models\PumpShift;
+use App\Models\Transaction;
 use App\Traits\NotificationHelper;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -56,44 +57,80 @@ class ShiftService
     }
 
     /**
-     * Menutup Shift (Sore/Akhir)
+     * Menutup Shift & Melakukan Snapshot Data Sistem
      */
     public function closeShift(PumpShift $shift, array $data): PumpShift
     {
         return DB::transaction(function () use ($shift, $data) {
+            // ... (Validasi closing_totalizer < opening TETAP SAMA) ...
             if ($data['closing_totalizer'] < $shift->opening_totalizer) {
                 throw ValidationException::withMessages([
-                    'closing_totalizer' => "Angka Akhir ({$data['closing_totalizer']}) tidak boleh lebih kecil dari Awal ({$shift->opening_totalizer})."
+                    'closing_totalizer' => "Meteran akhir ({$data['closing_totalizer']}) tidak boleh lebih kecil dari awal ({$shift->opening_totalizer})."
                 ]);
             }
 
-            $literSold = $data['closing_totalizer'] - $shift->opening_totalizer;
+            // 1. Hitung Fisik (Totalizer)
+            $literSoldPhysical = $data['closing_totalizer'] - $shift->opening_totalizer;
+
+            // 2. Hitung Sistem (Transaksi yang tercatat di shift ini)
+            // Asumsi: Transaksi memiliki pump_shift_id, atau berdasarkan range waktu
+            $systemSummary = Transaction::where('pump_shift_id', $shift->id)
+                ->orWhere(function($q) use ($shift) {
+                    // Fallback jika pump_shift_id null, cari berdasarkan range waktu & produk
+                    $q->whereBetween('transaction_date', [$shift->opened_at, Carbon::now()])
+                        ->whereHas('items', fn($i) => $i->where('product_id', $shift->product_id));
+                })
+                ->with('items')
+                ->get();
+
+            // Hitung total liter dari transaksi sistem
+            $literSoldSystem = $systemSummary->sum(fn($t) => $t->items->where('product_id', $shift->product_id)->sum('quantity_liter'));
+            $amountSystem = $systemSummary->sum('grand_total');
 
             $proofPath = null;
             if (isset($data['closing_proof']) && $data['closing_proof'] instanceof UploadedFile) {
                 $proofPath = $data['closing_proof']->store('shifts/closing', 'public');
             }
 
-            // Update Data
+            // 3. Update Data Shift (Termasuk Snapshot Sistem)
             $shift->update([
                 'closed_by' => Auth::id(),
                 'closing_totalizer' => $data['closing_totalizer'],
                 'closing_proof' => $proofPath,
                 'cash_collected' => $data['cash_collected'],
                 'closed_at' => Carbon::now(),
-                'total_sales_liter' => $literSold,
+
+                'total_sales_liter' => $literSoldPhysical, // Fisik
+                'system_transaction_liter' => $literSoldSystem, // Sistem
+                'system_transaction_amount' => $amountSystem, // Uang Sistem
+
                 'status' => PumpShiftStatusEnum::CLOSED->value,
+                'is_audited' => false, // Reset audit status
             ]);
 
-            NotificationHelper::send(
-                'Shift Ditutup',
-                Auth::user()->name . " menutup shift {$shift->product->name}. Total Liter: " . number_format($literSold) . "L. Cash: Rp " . number_format($data['cash_collected']),
-                route('shifts.index'),
-                'warning'
-            );
+            // Cek Selisih untuk Notifikasi
+            $diff = abs($literSoldPhysical - $literSoldSystem);
+            $notifType = $diff > 1 ? 'error' : 'success'; // Jika selisih > 1 Liter anggap masalah
+            $msg = "Shift Ditutup. Fisik: {$literSoldPhysical}L, Sistem: {$literSoldSystem}L. ";
+            $msg .= ($diff > 1) ? "TERDAPAT SELISIH {$diff}L. PERLU AUDIT!" : "Data Cocok.";
+
+            NotificationHelper::send('Laporan Shift', $msg, route('shifts.index'), $notifType);
 
             return $shift;
         });
+    }
+
+    /**
+     * Method Baru: Audit Shift oleh Owner
+     */
+    public function auditShift(PumpShift $shift, string $note): PumpShift
+    {
+        $shift->update([
+            'owner_note' => $note,
+            'is_audited' => true
+        ]);
+
+        return $shift;
     }
 
     /**

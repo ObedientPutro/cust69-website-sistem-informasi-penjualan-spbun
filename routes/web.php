@@ -90,6 +90,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/products/{product}/toggle', [ProductController::class, 'toggleStatus'])
             ->name('products.toggle-status');
 
+        Route::put('/shifts/{shift}/audit', [ShiftController::class, 'audit'])
+            ->name('shifts.audit');
+
         // --- RIWAYAT RESTOCK ---
         Route::get('/history/restocks', [RestockHistoryController::class, 'index'])->name('restock-history.index');
         Route::get('/history/restocks/export', [RestockHistoryController::class, 'export'])->name('restock-history.export');

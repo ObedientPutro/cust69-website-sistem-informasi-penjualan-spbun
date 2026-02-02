@@ -7,7 +7,7 @@ import SelectInput from '@/Components/FormElements/SelectInput.vue';
 import Button from '@/Components/Ui/Button.vue';
 import MetricCard from '@/Components/Metrics/MetricCard.vue';
 import Badge from '@/Components/Ui/Badge.vue';
-import { DocsIcon, BoxCubeIcon, PlugInIcon, WarningIcon } from '@/Components/Icons';
+import { DocsIcon, BoxCubeIcon, PlugInIcon, WarningIcon, ChevronDownIcon, ChevronRightIcon } from '@/Components/Icons'; // Pastikan Chevron diimport
 
 const props = defineProps<{
     data: any[];
@@ -158,13 +158,20 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr v-for="s in day.shifts" :key="s.id" class="border-b dark:border-gray-700">
-                                        <td class="px-3 py-2">{{ s.product?.name }}</td>
-                                        <td class="px-3 py-2 text-right">{{ s.opening_totalizer }}</td>
-                                        <td class="px-3 py-2 text-right">{{ s.closing_totalizer }}</td>
-                                        <td class="px-3 py-2 text-right font-bold">{{ s.total_sales_liter }}</td>
-                                        <td class="px-3 py-2 text-right">{{ formatRupiah(s.cash_collected) }}</td>
-                                    </tr>
+                                    <template v-for="s in day.shifts" :key="s.id">
+                                        <tr class="border-b dark:border-gray-700">
+                                            <td class="px-3 py-2">{{ s.product?.name }}</td>
+                                            <td class="px-3 py-2 text-right">{{ s.opening_totalizer }}</td>
+                                            <td class="px-3 py-2 text-right">{{ s.closing_totalizer }}</td>
+                                            <td class="px-3 py-2 text-right font-bold">{{ s.total_sales_liter }}</td>
+                                            <td class="px-3 py-2 text-right">{{ formatRupiah(s.cash_collected) }}</td>
+                                        </tr>
+                                        <tr v-if="s.is_audited && s.owner_note" class="bg-yellow-50 dark:bg-yellow-900/10 border-b border-yellow-100 dark:border-yellow-800/30">
+                                            <td colspan="5" class="px-3 py-2 text-[10px] italic text-yellow-700 dark:text-yellow-400">
+                                                <span class="font-bold uppercase">[Audit Owner]:</span> {{ s.owner_note }}
+                                            </td>
+                                        </tr>
+                                    </template>
                                     </tbody>
                                 </table>
                             </div>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PumpShiftStatusEnum;
 use App\Models\PumpShift;
 use App\Models\Restock;
@@ -29,8 +30,10 @@ class ReportService
             });
 
         // 2. Ambil Data Transaksi (Sistem)
+        // REVISI: KITA AMBIL SEMUA (TERMASUK RETURNED) untuk keperluan pencocokan Liter
         $transactions = Transaction::with(['items.product', 'user', 'customer'])
             ->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
+            // HAPUS filter exclude 'returned' disini agar liter return tetap terambil
             ->when($productId, function($q) use ($productId) {
                 $q->whereHas('items', fn($i) => $i->where('product_id', $productId));
             })
@@ -44,78 +47,50 @@ class ReportService
         foreach ($period as $date) {
             $dateStr = $date->format('Y-m-d');
 
-            // Skip jika tanggal kosong (opsional, jika ingin tampil tanggal kosong, hapus baris ini)
-            if (!isset($shifts[$dateStr]) && !isset($transactions[$dateStr])) continue;
+            if (!$shifts->has($dateStr) && !$transactions->has($dateStr)) continue;
 
-            $dayShifts = $shifts[$dateStr] ?? collect([]);
-            $dayTrans  = $transactions[$dateStr] ?? collect([]);
+            $dayShifts = $shifts->get($dateStr, collect([]));
+            $dayTrans  = $transactions->get($dateStr, collect([]));
 
             // --- A. ANALISA FISIK (SHIFT) ---
-            // 1. Liter Fisik (Totalisator)
             $totalizerLiter = $dayShifts->sum(function ($s) {
-                // Pastikan tipe data float
-                $savedLiter = (float) $s->total_sales_liter;
-                $opening    = (float) $s->opening_totalizer;
-                $closing    = (float) $s->closing_totalizer;
-
-                // Jika data tersimpan ada, pakai itu.
-                // Jika 0, coba hitung manual (Closing - Opening)
-                if ($savedLiter > 0) {
-                    return $savedLiter;
-                }
-
-                // Hitung manual jika closing valid (>0) dan lebih besar dari opening
-                if ($closing > 0 && $closing >= $opening) {
-                    return $closing - $opening;
-                }
-
-                return 0;
+                return (float) $s->total_sales_liter;
             });
 
-            // 2. Uang Fisik (Laci)
-            // Pastikan casting float agar tidak error jika null/string
             $physicalCash = $dayShifts->sum(fn($s) => (float) $s->cash_collected);
 
-            // --- B. ANALISA SISTEM (TRANSAKSI) ---
+            // --- B. ANALISA SISTEM ---
+
+            // 1. Liter: Hitung SEMUA (termasuk Return) agar match dengan Totalisator
             $systemLiter = $dayTrans->sum(fn($t) => $t->items->sum('quantity_liter'));
 
-            // Breakdown Pembayaran Sistem
-            $sysCash     = $dayTrans->where('payment_method', PaymentMethodEnum::CASH)->sum('grand_total');
-            $sysTransfer = $dayTrans->where('payment_method', PaymentMethodEnum::TRANSFER)->sum('grand_total');
-            $sysBon      = $dayTrans->where('payment_method', PaymentMethodEnum::BON)->sum('grand_total');
+            // 2. Uang: HANYA hitung yang VALID (Bukan Return)
+            $validTrans = $dayTrans->where('payment_status', '!=', PaymentStatusEnum::RETURNED);
+
+            $sysCash     = $validTrans->where('payment_method', PaymentMethodEnum::CASH)->sum(fn($t) => (float)$t->grand_total);
+            $sysTransfer = $validTrans->where('payment_method', PaymentMethodEnum::TRANSFER)->sum(fn($t) => (float)$t->grand_total);
+            $sysBon      = $validTrans->where('payment_method', PaymentMethodEnum::BON)->sum(fn($t) => (float)$t->grand_total);
             $sysTotal    = $sysCash + $sysTransfer + $sysBon;
 
-            // --- C. SELISIH (DISCREPANCY) ---
-            $diffLiter = $systemLiter - $totalizerLiter; // (+ Sistem lebih besar, - Mesin lebih besar)
-            $diffCash  = $physicalCash - $sysCash;       // Uang Laci - Uang Cash Seharusnya
-
-            // Status Liter
-            $statusLiter = 'match';
-            if ($diffLiter < 0 && $diffLiter >= -2) $statusLiter = 'warning';
-            if ($diffLiter < -2 || $diffLiter > 5) $statusLiter = 'danger';
+            // --- C. SELISIH ---
+            // systemLiter (Gross) dikurang totalizerLiter
+            // Jika Return dihitung di systemLiter, maka selisihnya akan mendekati 0 (Match), meskipun uangnya 0.
+            $diffLiter = $systemLiter - $totalizerLiter;
+            $diffCash  = $physicalCash - $sysCash;
 
             $report[] = [
                 'date' => $dateStr,
-
-                // Liter
                 'phys_liter' => $totalizerLiter,
                 'sys_liter'  => $systemLiter,
                 'diff_liter' => $diffLiter,
-                'status'     => $statusLiter,
-
-                // Money Breakdown
                 'sys_cash'     => $sysCash,
                 'sys_transfer' => $sysTransfer,
                 'sys_bon'      => $sysBon,
-                'sys_total'    => $sysTotal,
-
-                // Physical Cash Check
+                'sys_total'    => $sysTotal, // Total Uang Bersih
                 'phys_cash' => $physicalCash,
                 'diff_cash' => $diffCash,
-
-                // Detail (Untuk Expand)
                 'shifts' => $dayShifts,
-                'transactions' => $dayTrans
+                'transactions' => $dayTrans // Kirim semua data agar bisa diloop di detail (termasuk yg returned)
             ];
         }
 
@@ -127,37 +102,36 @@ class ReportService
      */
     public function getStockFlowReport(string $start, string $end, ?string $productId = null)
     {
-        // A. Barang Masuk (Restock)
         $inflow = Restock::with('product')
             ->whereBetween('date', [$start, $end])
             ->when($productId, fn($q) => $q->where('product_id', $productId))
             ->get()
             ->map(function ($item) {
                 return [
-                    'date' => Carbon::parse($item->date),
-                    'type' => 'Masuk (DO)',
+                    'date' => $item->date,
+                    'type' => 'Restock (DO)',
                     'product_name' => $item->product->name,
                     'qty_in' => $item->volume_liter,
                     'qty_out' => 0,
-                    'ref' => $item->note ?? 'DO #' . $item->id,
+                    'ref' => $item->note ?? '-',
                 ];
             });
 
-        // B. Barang Keluar (Penjualan)
         $outflow = TransactionItem::with(['transaction', 'product'])
             ->whereHas('transaction', function ($q) use ($start, $end) {
-                $q->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                $q->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
+                    ->where('payment_status', '!=', PaymentStatusEnum::RETURNED->value); // Tetap Exclude
             })
             ->when($productId, fn($q) => $q->where('product_id', $productId))
             ->get()
             ->map(function ($item) {
                 return [
                     'date' => $item->transaction->transaction_date,
-                    'type' => 'Keluar (Jual)',
+                    'type' => 'Penjualan',
                     'product_name' => $item->product->name,
                     'qty_in' => 0,
                     'qty_out' => $item->quantity_liter,
-                    'ref' => 'TRX #' . $item->transaction->id,
+                    'ref' => $item->transaction->trx_code,
                 ];
             });
 
@@ -170,7 +144,8 @@ class ReportService
     public function getProfitLossReport(string $start, string $end, ?string $productId = null)
     {
         $query = TransactionItem::whereHas('transaction', function ($q) use ($start, $end) {
-            $q->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
+            $q->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
+                ->where('payment_status', '!=', PaymentStatusEnum::RETURNED->value); // Tetap Exclude
         });
 
         if ($productId) {
@@ -191,7 +166,7 @@ class ReportService
                     'date' => $row->date,
                     'omzet' => (float) $row->omzet,
                     'hpp' => (float) $row->hpp,
-                    'gross_profit' => (float) $row->omzet - (float) $row->hpp,
+                    'gross_profit' => (float) $row->omzet - (float) $row->hpp
                 ];
             });
 
