@@ -80,7 +80,7 @@ const columns = [
     { label: 'Kapal', key: 'ship_name', sortable: true, align: 'left' },
     { label: 'Pemilik', key: 'owner_name', sortable: true, align: 'left' },
     { label: 'GT / PK', key: 'gross_tonnage', sortable: true, align: 'center' },
-    { label: 'Limit & Piutang', key: 'credit_info', sortable: true, align: 'left' }, // Diubah kuncinya
+    { label: 'Limit & Piutang', key: 'credit_info', sortable: true, align: 'left' },
     { label: 'Status', key: 'is_active', sortable: true, align: 'center' },
 ];
 
@@ -107,7 +107,6 @@ const openEdit = (customer: any) => {
     form.gross_tonnage = parseFloat(customer.gross_tonnage);
     form.pk_engine = parseFloat(customer.pk_engine);
     form.address = customer.address;
-    // Limit tidak di-load ke form edit utama agar tidak bisa diubah disini
     form.photo = null;
     form._method = 'put';
     isModalOpen.value = true;
@@ -240,13 +239,18 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                 </div>
             </template>
 
-            <template #cell-is_active="{ row }">
+            <template v-if="isOwner" #cell-is_active="{ row }">
                 <div class="flex justify-center">
                     <ToggleSwitch
                         :model-value="Boolean(row.is_active)"
                         @update:model-value="toggleStatus(row)"
                         :label="row.is_active ? 'Aktif' : 'Non-Aktif'"
                     />
+                </div>
+            </template>
+            <template v-else #cell-is_active="{ row }">
+                <div class="flex justify-center">
+                    <p>{{ row.is_active ? 'Aktif' : 'Non-Aktif' }}</p>
                 </div>
             </template>
 
@@ -273,6 +277,7 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                     </button>
 
                     <button
+                        v-if="isOwner"
                         @click="deleteCustomer(row.id)"
                         class="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 transition hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                         title="Hapus Data"

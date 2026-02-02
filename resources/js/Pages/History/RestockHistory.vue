@@ -84,7 +84,6 @@ const columns = [
     { label: 'Volume (L)', key: 'volume_liter', sortable: true, align: 'center' },
     { label: 'Total Harga', key: 'total_cost', sortable: true, align: 'right' },
     { label: 'Admin', key: 'user_name', sortable: false, align: 'left' },
-    { label: 'Aksi', key: 'actions', sortable: false, align: 'right' }, // Kolom Aksi Baru
 ];
 
 const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
@@ -107,7 +106,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
             </div>
         </div>
 
-        <DataTable :rows="logs.data" :columns="columns" :pagination="logs" :filters="filters" :enableActions="false">
+        <DataTable :rows="logs.data" :columns="columns" :pagination="logs" :filters="filters" :enableActions="isOwner">
             <template #filters>
                 <div class="flex flex-col sm:flex-row gap-3 w-full justify-between items-end">
                     <div class="flex gap-2 w-full sm:w-auto">
@@ -120,7 +119,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                             </select>
                         </div>
                     </div>
-                    <div class="flex gap-2">
+                    <div v-if="isOwner" class="flex gap-2">
                         <Button variant="outline" size="sm" @click="exportData('csv')">CSV</Button>
                         <Button variant="primary" size="sm" @click="exportData('pdf')">PDF</Button>
                     </div>
@@ -132,7 +131,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
             <template #cell-total_cost="{ row }"><span class="font-mono text-gray-700 dark:text-gray-300">{{ formatRupiah(row.total_cost) }}</span></template>
             <template #cell-user_name="{ row }"><span class="text-xs bg-gray-100 px-2 py-1 rounded dark:bg-gray-800">{{ row.user?.name }}</span></template>
 
-            <template #cell-actions="{ row }">
+            <template #actions-row="{ row }">
                 <button
                     v-if="isOwner"
                     @click="openEditModal(row)"

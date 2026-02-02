@@ -10,7 +10,7 @@ import Modal from '@/Components/Ui/Modal.vue';
 import ToggleSwitch from '@/Components/FormElements/ToggleSwitch.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import {Head, router, useForm} from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import DecimalInput from "@/Components/FormElements/DecimalInput.vue";
 
@@ -19,7 +19,10 @@ const props = defineProps<{
     filters: any;
 }>();
 
+const page = usePage();
 const swal = useSweetAlert();
+const isOwner = computed(() => page.props.auth.user.role === 'owner');
+
 const isCreateModalOpen = ref(false);
 const isRestockModalOpen = ref(false);
 const isSoundingModalOpen = ref(false);
@@ -333,11 +336,12 @@ const toggleStatus = (product: any) => {
                         </svg>
                     </button>
 
-                    <div
+                    <div v-if="isOwner"
                         class="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-700"
                     ></div>
 
                     <button
+                        v-if="isOwner"
                         @click="openEditModal(row)"
                         class="rounded-lg border border-orange-200 bg-orange-50 p-2 text-orange-600 transition hover:bg-orange-100 dark:border-orange-500/20 dark:bg-orange-500/10 dark:text-orange-400 dark:hover:bg-orange-500/20"
                         title="Edit Data"
@@ -346,6 +350,7 @@ const toggleStatus = (product: any) => {
                     </button>
 
                     <button
+                        v-if="isOwner"
                         @click="deleteProduct(row.id)"
                         class="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 transition hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                         title="Hapus Data"

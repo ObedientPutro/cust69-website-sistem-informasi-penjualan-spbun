@@ -4,6 +4,7 @@ namespace App\Http\Requests\Inventory;
 
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class StoreSoundingRequest extends FormRequest
@@ -13,7 +14,7 @@ class StoreSoundingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('access-dashboard');
     }
 
     /**

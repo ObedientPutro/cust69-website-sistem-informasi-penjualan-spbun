@@ -90,7 +90,6 @@ const columns = [
     { label: 'Stok Fisik', key: 'physical_liter', sortable: false, align: 'center' },
     { label: 'Selisih (L)', key: 'difference', sortable: true, align: 'center' },
     { label: 'Petugas', key: 'user_name', sortable: false, align: 'left' },
-    { label: 'Aksi', key: 'actions', sortable: false, align: 'right' },
 ];
 
 const formatDateTime = (date: string) => new Date(date).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -113,7 +112,7 @@ const getDifferenceStatus = (diff: number, systemStock: number) => {
             </div>
         </div>
 
-        <DataTable :rows="logs.data" :columns="columns" :pagination="logs" :filters="filters" :enableActions="false">
+        <DataTable :rows="logs.data" :columns="columns" :pagination="logs" :filters="filters" :enableActions="isOwner">
             <template #filters>
                 <div class="flex flex-col sm:flex-row gap-3 w-full justify-between items-end">
                     <div class="flex gap-2 w-full sm:w-auto">
@@ -126,7 +125,7 @@ const getDifferenceStatus = (diff: number, systemStock: number) => {
                             </select>
                         </div>
                     </div>
-                    <div class="flex gap-2">
+                    <div v-if="isOwner" class="flex gap-2">
                         <Button variant="outline" size="sm" @click="exportData('csv')">CSV</Button>
                         <Button variant="primary" size="sm" @click="exportData('pdf')">PDF</Button>
                     </div>
@@ -144,7 +143,7 @@ const getDifferenceStatus = (diff: number, systemStock: number) => {
             </template>
             <template #cell-user_name="{ row }"><span class="text-xs bg-gray-100 px-2 py-1 rounded dark:bg-gray-800">{{ row.user?.name }}</span></template>
 
-            <template #cell-actions="{ row }">
+            <template #actions-row="{ row }">
                 <button
                     v-if="isOwner"
                     @click="openEditModal(row)"

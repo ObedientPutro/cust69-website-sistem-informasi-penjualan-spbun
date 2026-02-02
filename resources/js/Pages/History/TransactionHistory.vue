@@ -70,7 +70,6 @@ const columns = [
     { label: 'Total', key: 'grand_total', sortable: true, align: 'right' },
     { label: 'Metode', key: 'payment_method', sortable: false, align: 'center' },
     { label: 'Status', key: 'payment_status', sortable: false, align: 'center' },
-    { label: 'Aksi', key: 'actions', sortable: false, align: 'right' },
 ];
 
 const paymentMethodOptions = [
@@ -222,7 +221,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
             </MetricCard>
         </div>
 
-        <DataTable :rows="transactions.data" :columns="columns" :pagination="transactions" :filters="filters" :enableActions="false">
+        <DataTable :rows="transactions.data" :columns="columns" :pagination="transactions" :filters="filters" :enableActions="true">
             <template #cell-transaction_date="{ row }">
                 <div class="text-sm">
                     <span class="font-bold text-brand-600 dark:text-brand-400 block">{{ row.trx_code }}</span>
@@ -264,7 +263,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                 </div>
             </template>
 
-            <template #cell-actions="{ row }">
+            <template #actions-row="{ row }">
                 <div class="flex justify-end items-center gap-2">
                     <button
                         v-if="row.payment_proof_url"

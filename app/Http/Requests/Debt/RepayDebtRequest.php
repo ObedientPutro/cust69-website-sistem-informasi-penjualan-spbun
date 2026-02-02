@@ -14,7 +14,7 @@ class RepayDebtRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Gate::allows('access-owner');
+        return Gate::allows('access-dashboard');
     }
 
     /**

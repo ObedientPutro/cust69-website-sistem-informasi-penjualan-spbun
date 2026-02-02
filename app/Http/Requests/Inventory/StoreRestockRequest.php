@@ -14,7 +14,7 @@ class StoreRestockRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Gate::allows('access-owner') || Gate::allows('access-operator');
+        return Gate::allows('access-dashboard');
     }
 
     /**

@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/debts', [DebtController::class, 'index'])->name('debts.index');
     Route::post('/debts/{transaction}/repay', [DebtController::class, 'repay'])->name('debts.repay');
 
+    // --- MASTER DATA: PRODUCTS (BBM) ---
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+
     // Inventory Routes
     Route::post('/inventory/restock', [InventoryController::class, 'storeRestock'])->name('inventory.restock');
     Route::post('/inventory/sounding', [InventoryController::class, 'storeSounding'])->name('inventory.sounding');
@@ -51,13 +54,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'update'  => 'customers.update',
             'destroy' => 'customers.delete',
         ]);
-    Route::patch('/customers/{customer}/toggle', [CustomerController::class, 'toggleStatus'])
-        ->name('customers.toggle-status');
+    Route::patch('/customers/{customer}/toggle', [CustomerController::class, 'toggleStatus'])->name('customers.toggle-status');
 
     // --- OPEN AND CLOSE SHIFT ---
     Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
     Route::post('/shifts', [ShiftController::class, 'store'])->name('shifts.store');
     Route::post('/shifts/{shift}/close', [ShiftController::class, 'update'])->name('shifts.close');
+
+    // --- RIWAYAT TRANSACTION ---
+    Route::get('/history/transactions', [TransactionHistoryController::class, 'index'])->name('history.transactions.index');
+
+    // --- RIWAYAT RESTOCK ---
+    Route::get('/history/restocks', [RestockHistoryController::class, 'index'])->name('restock-history.index');
+
+    // --- RIWAYAT SOUNDING (AUDIT) ---
+    Route::get('/history/soundings', [SoundingHistoryController::class, 'index'])->name('sounding-history.index');
 
     // =====================================================================
     // GROUP 2: OWNER ONLY (SUPER ADMIN)
@@ -72,39 +83,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'update'  => 'users.update',
                 'destroy' => 'users.delete',
             ]);
-        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
-            ->name('users.toggle-status');
+        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
-        Route::put('/customers/{customer}/limit', [CustomerController::class, 'updateLimit'])
-            ->name('customers.update-limit');
+        Route::put('/customers/{customer}/limit', [CustomerController::class, 'updateLimit'])->name('customers.update-limit');
 
         // --- MASTER DATA: PRODUCTS (BBM) ---
-        Route::resource('/products', ProductController::class)
-            ->except(['show', 'create', 'edit'])
-            ->names([
-                'index'   => 'products.index',
-                'store'   => 'products.save',
-                'update'  => 'products.update',
-                'destroy' => 'products.delete',
-            ]);
-        Route::patch('/products/{product}/toggle', [ProductController::class, 'toggleStatus'])
-            ->name('products.toggle-status');
+        Route::post('/products', [ProductController::class, 'store'])->name('products.save');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.delete');
+        Route::patch('/products/{product}/toggle', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
 
-        Route::put('/shifts/{shift}/audit', [ShiftController::class, 'audit'])
-            ->name('shifts.audit');
+        Route::put('/shifts/{shift}/audit', [ShiftController::class, 'audit'])->name('shifts.audit');
 
         // --- RIWAYAT RESTOCK ---
-        Route::get('/history/restocks', [RestockHistoryController::class, 'index'])->name('restock-history.index');
         Route::get('/history/restocks/export', [RestockHistoryController::class, 'export'])->name('restock-history.export');
         Route::put('/history/restocks/{id}', [RestockHistoryController::class, 'update'])->name('restock-history.update');
 
         // --- RIWAYAT SOUNDING (AUDIT) ---
-        Route::get('/history/soundings', [SoundingHistoryController::class, 'index'])->name('sounding-history.index');
         Route::get('/history/soundings/export', [SoundingHistoryController::class, 'export'])->name('sounding-history.export');
         Route::put('/history/soundings/{id}', [SoundingHistoryController::class, 'update'])->name('sounding-history.update');
 
         // --- RIWAYAT TRANSACTION ---
-        Route::get('/history/transactions', [TransactionHistoryController::class, 'index'])->name('history.transactions.index');
         Route::get('/history/transactions/export', [TransactionHistoryController::class, 'export'])->name('history.transactions.export');
 
         // --- LAPORAN ---
