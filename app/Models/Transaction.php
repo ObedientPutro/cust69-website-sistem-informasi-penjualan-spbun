@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Transaction extends Model
 {
@@ -38,6 +39,13 @@ class Transaction extends Model
         'repayment_method' => PaymentMethodEnum::class,
         'payment_status' => PaymentStatusEnum::class,
     ];
+
+    protected $appends = ['payment_proof_url'];
+
+    public function getPaymentProofUrlAttribute(): ?string
+    {
+        return $this->payment_proof ? Storage::url($this->payment_proof) : null;
+    }
 
     // --- Relationships ---
     public function user(): BelongsTo

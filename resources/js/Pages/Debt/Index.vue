@@ -9,8 +9,8 @@ import Button from '@/Components/Ui/Button.vue';
 import MetricCard from '@/Components/Metrics/MetricCard.vue';
 import Badge from '@/Components/Ui/Badge.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
-import TextInput from '@/Components/FormElements/TextInput.vue';
-import TextArea from '@/Components/FormElements/TextArea.vue'; // Tambahkan ini
+import ImageViewerModal from '@/Components/Ui/ImageViewerModal.vue';
+import TextArea from '@/Components/FormElements/TextArea.vue';
 import DatePicker from '@/Components/FormElements/DatePicker.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
@@ -122,6 +122,16 @@ const submitEdit = () => {
     });
 };
 
+const isViewerOpen = ref(false);
+const viewerUrl = ref<string | null>(null);
+const viewerAlt = ref('');
+
+const openProofViewer = (url: string, customerName: string) => {
+    viewerUrl.value = url;
+    viewerAlt.value = `Bukti Transfer - ${customerName}`;
+    isViewerOpen.value = true;
+};
+
 const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute:'2-digit' });
 </script>
@@ -217,6 +227,15 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
             <template #cell-actions="{ row }">
                 <div class="flex justify-end gap-2">
                     <button
+                        v-if="row.payment_proof_url"
+                        @click="openProofViewer(row.payment_proof_url, row.customer?.name || 'Pelanggan')"
+                        class="rounded-lg border border-purple-200 bg-purple-50 p-2 text-purple-600 transition hover:bg-purple-100 dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:hover:bg-purple-500/20"
+                        title="Lihat Bukti Transfer"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    </button>
+
+                    <button
                         v-if="isOwner && row.payment_status !== 'returned'"
                         @click="openEditModal(row)"
                         class="rounded-lg border border-orange-200 bg-orange-50 p-2 text-orange-600 transition hover:bg-orange-100 dark:border-orange-500/20 dark:bg-orange-500/10 dark:text-orange-400 dark:hover:bg-orange-500/20"
@@ -239,6 +258,13 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                 </div>
             </template>
         </DataTable>
+
+        <ImageViewerModal
+            :show="isViewerOpen"
+            :image-src="viewerUrl"
+            :alt-text="viewerAlt"
+            @close="isViewerOpen = false"
+        />
 
         <Modal :show="isPayModalOpen" title="Konfirmasi Pelunasan" maxWidth="md" @close="isPayModalOpen = false">
             <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700">

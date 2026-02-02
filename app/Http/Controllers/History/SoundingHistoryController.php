@@ -116,7 +116,6 @@ class SoundingHistoryController extends Controller
         $newDifference = $request->physical_liter - $sounding->system_liter_snapshot;
 
         $sounding->update([
-            'recorded_at' => $request->recorded_at,
             'physical_height_cm' => $request->physical_height_cm,
             'physical_liter' => $request->physical_liter,
             'difference' => $newDifference, // Update selisih

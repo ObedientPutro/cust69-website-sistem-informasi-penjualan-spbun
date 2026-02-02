@@ -25,8 +25,6 @@ class UpdateRestockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date' => ['required', 'date'],
-            'product_id' => ['required', Rule::exists(Product::class, 'id')],
             'volume_liter' => ['required', 'numeric', 'min:1'],
             'total_cost' => ['required', 'numeric', 'min:0'],
             'note' => ['nullable', 'string', 'max:255'],

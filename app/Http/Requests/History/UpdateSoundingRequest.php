@@ -23,7 +23,6 @@ class UpdateSoundingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'recorded_at' => ['required', 'date'],
             'physical_height_cm' => ['nullable', 'numeric', 'min:0'],
             'physical_liter' => ['required', 'numeric', 'min:0'],
         ];

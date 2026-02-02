@@ -158,11 +158,21 @@ const getDifferenceStatus = (diff: number, systemStock: number) => {
 
         <Modal :show="isEditModalOpen" title="Edit Hasil Audit Tangki" @close="isEditModalOpen = false">
             <form @submit.prevent="submitEdit" class="space-y-4">
+                <div class="p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-200">
+                    <strong>Perhatian:</strong> Tanggal & Waktu tidak dapat diubah.
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
-                    <DatePicker v-model="editForm.recorded_at" label="Tanggal Cek" required />
+                    <DatePicker v-model="editForm.recorded_at" label="Tanggal Cek" disabled />
+
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Jam</label>
-                        <input type="time" v-model="editForm.time" class="w-full rounded-lg border-gray-300 bg-transparent py-2.5 px-4 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900" required />
+                        <input
+                            type="time"
+                            v-model="editForm.time"
+                            disabled
+                            class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700"
+                        />
                     </div>
                 </div>
 

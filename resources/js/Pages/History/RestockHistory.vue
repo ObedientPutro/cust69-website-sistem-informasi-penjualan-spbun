@@ -151,8 +151,9 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <DatePicker v-model="editForm.date" label="Tanggal Masuk" required />
-                    <SelectInput v-model="editForm.product_id" label="Produk" required>
+                    <DatePicker v-model="editForm.date" label="Tanggal Masuk" disabled />
+
+                    <SelectInput v-model="editForm.product_id" label="Produk" disabled>
                         <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
                     </SelectInput>
                 </div>

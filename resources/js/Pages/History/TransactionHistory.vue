@@ -6,7 +6,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DataTable from '@/Components/Tables/DataTable.vue';
 import Button from '@/Components/Ui/Button.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
-import TextInput from '@/Components/FormElements/TextInput.vue';
+import ImageViewerModal from '@/Components/Ui/ImageViewerModal.vue';
 import DatePicker from '@/Components/FormElements/DatePicker.vue';
 import MetricCard from '@/Components/Metrics/MetricCard.vue';
 import Badge from '@/Components/Ui/Badge.vue';
@@ -143,6 +143,16 @@ const submitReturn = () => {
     });
 };
 
+const isViewerOpen = ref(false);
+const viewerUrl = ref<string | null>(null);
+const viewerAlt = ref('');
+
+const openProofViewer = (url: string, trxCode: string) => {
+    viewerUrl.value = url;
+    viewerAlt.value = `Bukti Transfer - ${trxCode}`;
+    isViewerOpen.value = true;
+};
+
 const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 </script>
@@ -256,6 +266,15 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
 
             <template #cell-actions="{ row }">
                 <div class="flex justify-end items-center gap-2">
+                    <button
+                        v-if="row.payment_proof_url"
+                        @click="openProofViewer(row.payment_proof_url, row.trx_code)"
+                        class="rounded-lg border border-purple-200 bg-purple-50 p-2 text-purple-600 transition hover:bg-purple-100 dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:hover:bg-purple-500/20"
+                        title="Lihat Bukti Transfer"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    </button>
+
                     <a
                         :href="route('transactions.print', row.id)"
                         target="_blank"
@@ -285,6 +304,13 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                 </div>
             </template>
         </DataTable>
+
+        <ImageViewerModal
+            :show="isViewerOpen"
+            :image-src="viewerUrl"
+            :alt-text="viewerAlt"
+            @close="isViewerOpen = false"
+        />
 
         <Modal :show="isEditModalOpen" title="Edit Transaksi (Owner)" @close="isEditModalOpen = false">
             <form @submit.prevent="submitEdit" class="space-y-4">

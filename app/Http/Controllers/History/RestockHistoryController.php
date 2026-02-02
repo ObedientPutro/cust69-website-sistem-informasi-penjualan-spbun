@@ -126,8 +126,6 @@ class RestockHistoryController extends Controller
 
             // 2. Update Data Restock
             $restock->update([
-                'date' => $request->date,
-                'product_id' => $request->product_id,
                 'volume_liter' => $request->volume_liter,
                 'total_cost' => $request->total_cost,
                 'note' => $request->note,
