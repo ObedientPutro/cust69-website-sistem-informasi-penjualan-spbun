@@ -221,26 +221,21 @@ const onLeave = (el) => {
             <Link href="/dashboard">
                 <img
                     v-if="isExpanded || isHovered || isMobileOpen"
-                    class="dark:hidden"
-                    src="/images/logo/logo.svg"
+                    class="dark:hidden h-9 w-auto mx-auto"
+                    src="/images/logo/logo-light.png"
                     alt="Logo"
-                    width="150"
-                    height="40"
                 />
                 <img
                     v-if="isExpanded || isHovered || isMobileOpen"
-                    class="hidden dark:block"
-                    src="/images/logo/logo-dark.svg"
+                    class="hidden dark:block h-9 w-auto mx-auto"
+                    src="/images/logo/logo-dark.png"
                     alt="Logo"
-                    width="150"
-                    height="40"
                 />
                 <img
                     v-else
-                    src="/images/logo/logo-icon.svg"
+                    class="h-9 w-auto mx-auto"
+                    src="/images/logo/logo-icon.png"
                     alt="Logo"
-                    width="32"
-                    height="32"
                 />
             </Link>
         </div>

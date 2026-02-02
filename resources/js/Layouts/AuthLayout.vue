@@ -16,8 +16,8 @@ defineProps<{
                 <div class="mx-auto flex w-full max-w-md flex-col justify-center px-6 py-12 lg:px-8">
 
                     <div class="lg:hidden mb-6 text-center">
-                        <Link :href="route('dashboard')" class="inline-block">
-                            <img src="/images/logo/auth-logo.svg" alt="Logo" class="h-10 w-auto mx-auto" />
+                        <Link :href="route('login')" class="inline-block">
+                            <img src="/images/logo/auth-logo-black.png" alt="Logo" class="h-24 w-auto mx-auto" />
                         </Link>
                     </div>
 
@@ -43,13 +43,11 @@ defineProps<{
                     <div
                         class="relative z-10 flex max-w-xs flex-col items-center"
                     >
-                        <Link :href="route('dashboard')" class="mb-4 block">
+                        <Link :href="route('login')" class="mb-4 block">
                             <img
-                                width="{231}"
-                                height="{48}"
-                                src="/images/logo/auth-logo.svg"
+                                src="/images/logo/auth-logo-white.png"
                                 alt="Logo"
-                                class="h-12 w-auto"
+                                class="h-36 w-auto"
                             />
                         </Link>
                         <p class="text-center text-gray-400 dark:text-white/60">
