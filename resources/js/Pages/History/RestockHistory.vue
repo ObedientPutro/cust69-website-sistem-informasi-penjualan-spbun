@@ -12,7 +12,8 @@ import TextInput from '@/Components/FormElements/TextInput.vue'; // Import Input
 import SelectInput from '@/Components/FormElements/SelectInput.vue'; // Import Select
 import TextArea from '@/Components/FormElements/TextArea.vue'; // Import Textarea
 import { DocsIcon } from '@/Components/Icons';
-import { useSweetAlert } from '@/Composables/useSweetAlert'; // Import Alert
+import { useSweetAlert } from '@/Composables/useSweetAlert';
+import DecimalInput from "@/Components/FormElements/DecimalInput.vue"; // Import Alert
 
 const props = defineProps<{
     logs: any;
@@ -157,7 +158,13 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <TextInput v-model="editForm.volume_liter" type="number" step="0.01" label="Volume (Liter)" required />
+                    <DecimalInput
+                        v-model="editForm.volume_liter"
+                        label="Volume (Liter)"
+                        placeholder="0.000"
+                        suffix="Liter"
+                        required
+                    />
                     <TextInput v-model="editForm.total_cost" type="number" label="Total Harga (Rp)" required />
                 </div>
 

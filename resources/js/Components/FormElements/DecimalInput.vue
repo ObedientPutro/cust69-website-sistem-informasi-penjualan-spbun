@@ -2,7 +2,6 @@
 import InputError from '@/Components/FormElements/InputError.vue';
 import { computed, ref, watch } from 'vue';
 
-// Model value bisa string atau number
 const props = defineProps<{
     modelValue: string | number;
     label?: string;
@@ -18,46 +17,76 @@ const emit = defineEmits(['update:modelValue']);
 const inputRef = ref<HTMLInputElement | null>(null);
 const displayValue = ref('');
 
-const formatToDecimal = (val: string | number) => {
+// Helper: Format angka (Titik) ke string tampilan (Koma)
+// Contoh: 10.5 -> "10,500"
+const formatToDisplay = (val: string | number) => {
     if (val === '' || val === null || val === undefined) return '';
+
+    // Pastikan input berupa angka float standar (titik)
     const num = parseFloat(val.toString());
-    return isNaN(num) ? '' : num.toFixed(3);
+
+    if (isNaN(num)) return '';
+
+    // Format ke 3 desimal, lalu ganti titik dengan koma
+    return num.toFixed(2).replace('.', ',');
 };
 
+// Watcher: Sinkronisasi data dari Parent ke Tampilan
 watch(() => props.modelValue, (newVal) => {
+    // Hanya update tampilan jika element tidak sedang difokus (menghindari kursor lompat)
     if (document.activeElement !== inputRef.value) {
-        displayValue.value = newVal ? formatToDecimal(newVal) : '';
+        displayValue.value = newVal ? formatToDisplay(newVal) : '';
     }
 }, { immediate: true });
 
+// Handle Input (Saat mengetik)
 const onInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
     let val = target.value;
 
-    val = val.replace(/[^0-9.]/g, '');
+    // 1. Auto-convert Titik ke Koma (UX: User numpad sering pakai titik)
+    val = val.replace('.', ',');
 
-    const dots = val.split('.').length - 1;
-    if (dots > 1) val = val.slice(0, -1);
+    // 2. Hapus karakter selain Angka dan Koma
+    val = val.replace(/[^0-9,]/g, '');
 
-    if (val.includes('.')) {
-        const [integer, decimal] = val.split('.');
+    // 3. Pastikan hanya ada satu koma
+    const parts = val.split(',');
+    if (parts.length > 2) {
+        val = parts[0] + ',' + parts.slice(1).join('');
+    }
+
+    // 4. Batasi maksimal 3 angka di belakang koma
+    if (val.includes(',')) {
+        const [integer, decimal] = val.split(',');
         if (decimal && decimal.length > 3) {
-            val = `${integer}.${decimal.substring(0, 3)}`;
+            val = `${integer},${decimal.substring(0, 3)}`;
         }
     }
 
+    // Update tampilan di input
     displayValue.value = val;
-    emit('update:modelValue', val);
+
+    // EMIT KE PARENT: Ganti Koma kembali ke Titik agar Backend/Math aman
+    // Contoh visual: "10,5" -> Data: "10.5"
+    emit('update:modelValue', val.replace(',', '.'));
 };
 
+// Handle Blur (Saat keluar fokus) -> Format Rapi
 const onBlur = () => {
     if (displayValue.value) {
-        const formatted = formatToDecimal(displayValue.value);
+        // Normalisasi: Ubah koma ke titik dulu untuk diparsing
+        const normalized = displayValue.value.replace(',', '.');
+        const formatted = formatToDisplay(normalized);
+
         displayValue.value = formatted;
-        emit('update:modelValue', formatted);
+
+        // Emit nilai yang sudah diformat (dengan titik)
+        emit('update:modelValue', formatted.replace(',', '.'));
     } else {
-        displayValue.value = '0.000';
-        emit('update:modelValue', '0.000');
+        // Jika kosong, set default tampilan 0,000 tapi data 0
+        displayValue.value = '0,000';
+        emit('update:modelValue', '0');
     }
 };
 
@@ -87,7 +116,7 @@ const inputClasses = computed(() => {
                 type="text"
                 inputmode="decimal"
                 :value="displayValue"
-                :placeholder="placeholder || '0.000'"
+                :placeholder="placeholder || '0,00'"
                 :disabled="disabled"
                 :class="inputClasses"
                 @input="onInput"
@@ -103,7 +132,3 @@ const inputClasses = computed(() => {
         <InputError :message="error" />
     </div>
 </template>
-
-<style scoped>
-
-</style>

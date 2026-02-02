@@ -12,6 +12,7 @@ import { useSweetAlert } from '@/Composables/useSweetAlert';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import {Head, router, useForm} from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import DecimalInput from "@/Components/FormElements/DecimalInput.vue";
 
 const props = defineProps<{
     products: any;
@@ -496,14 +497,13 @@ const toggleStatus = (product: any) => {
                 />
 
                 <div class="grid grid-cols-2 gap-4">
-                    <TextInput
+                    <DecimalInput
                         v-model="formRestock.volume_liter"
-                        type="number"
-                        step="0.01"
                         label="Volume (Liter)"
-                        placeholder="0"
-                        required
+                        placeholder="0.00"
+                        suffix="Liter"
                         :error="formRestock.errors.volume_liter"
+                        required
                     />
                     <TextInput
                         v-model="formRestock.total_cost"
@@ -593,14 +593,13 @@ const toggleStatus = (product: any) => {
                         label="Tinggi (CM)"
                         placeholder="Opsional"
                     />
-                    <TextInput
-                        v-model="formSounding.physical_liter"
-                        type="number"
-                        step="0.01"
+                    <DecimalInput
+                        v-model="formSounding.errors.physical_liter"
                         label="Volume Fisik (Liter)"
-                        placeholder="Hasil Ukur"
+                        placeholder="0.00"
+                        suffix="Liter"
+                        :error="formRestock.errors.volume_liter"
                         required
-                        :error="formSounding.errors.physical_liter"
                     />
                 </div>
 

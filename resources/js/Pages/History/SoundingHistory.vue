@@ -10,6 +10,7 @@ import Badge from '@/Components/Ui/Badge.vue';
 import Modal from '@/Components/Ui/Modal.vue';
 import TextInput from '@/Components/FormElements/TextInput.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
+import DecimalInput from "@/Components/FormElements/DecimalInput.vue";
 
 const props = defineProps<{
     logs: any;
@@ -167,7 +168,13 @@ const getDifferenceStatus = (diff: number, systemStock: number) => {
 
                 <div class="grid grid-cols-2 gap-4">
                     <TextInput v-model="editForm.physical_height_cm" type="number" label="Tinggi (cm)" placeholder="Opsional" />
-                    <TextInput v-model="editForm.physical_liter" type="number" step="0.01" label="Stok Fisik (Liter)" required />
+                    <DecimalInput
+                        v-model="editForm.physical_liter"
+                        label="Stok Fisik (Liter)"
+                        placeholder="0.000"
+                        suffix="Liter"
+                        required
+                    />
                 </div>
 
                 <div class="flex justify-end gap-3 mt-4 border-t pt-4">
