@@ -156,7 +156,18 @@ const formatDate = (dateString: string) => {
 };
 
 const formatNumber = (num: number | string) => {
-    return Number(num).toLocaleString('id-ID');
+    if (num === null || num === undefined || num === '') return '-';
+
+    // 1. Pastikan nilai adalah angka float
+    const value = typeof num === 'string' ? parseFloat(num) : num;
+
+    // 2. Format ID tanpa pemisah ribuan (useGrouping: false)
+    // Contoh: 12345.50 -> "12345,50"
+    return new Intl.NumberFormat('id-ID', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        useGrouping: false // <--- INI KUNCINYA (Matikan Titik Ribuan)
+    }).format(value);
 };
 </script>
 
