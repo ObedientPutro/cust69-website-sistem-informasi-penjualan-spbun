@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\History\UpdateSoundingRequest;
 use App\Models\Product;
 use App\Models\TankSounding;
 use App\Traits\ExportHelper;
@@ -104,5 +105,24 @@ class SoundingHistoryController extends Controller
         );
     }
 
+    /**
+     * Update Sounding Log (Owner Only)
+     */
+    public function update(UpdateSoundingRequest $request, string $id)
+    {
+        $sounding = TankSounding::findOrFail($id);
+
+        // Hitung ulang selisih (Fisik Baru - Sistem Snapshot Lama)
+        $newDifference = $request->physical_liter - $sounding->system_liter_snapshot;
+
+        $sounding->update([
+            'recorded_at' => $request->recorded_at,
+            'physical_height_cm' => $request->physical_height_cm,
+            'physical_liter' => $request->physical_liter,
+            'difference' => $newDifference, // Update selisih
+        ]);
+
+        return redirect()->back()->with('success', 'Data Audit Tangki berhasil diperbarui.');
+    }
 
 }

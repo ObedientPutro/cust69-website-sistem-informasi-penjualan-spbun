@@ -75,6 +75,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
             ->name('users.toggle-status');
 
+        Route::put('/customers/{customer}/limit', [CustomerController::class, 'updateLimit'])
+            ->name('customers.update-limit');
+
         // --- MASTER DATA: PRODUCTS (BBM) ---
         Route::resource('/products', ProductController::class)
             ->except(['show', 'create', 'edit'])
@@ -90,10 +93,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // --- RIWAYAT RESTOCK ---
         Route::get('/history/restocks', [RestockHistoryController::class, 'index'])->name('restock-history.index');
         Route::get('/history/restocks/export', [RestockHistoryController::class, 'export'])->name('restock-history.export');
+        Route::put('/history/restocks/{id}', [RestockHistoryController::class, 'update'])->name('restock-history.update');
 
         // --- RIWAYAT SOUNDING (AUDIT) ---
         Route::get('/history/soundings', [SoundingHistoryController::class, 'index'])->name('sounding-history.index');
         Route::get('/history/soundings/export', [SoundingHistoryController::class, 'export'])->name('sounding-history.export');
+        Route::put('/history/soundings/{id}', [SoundingHistoryController::class, 'update'])->name('sounding-history.update');
 
         // --- RIWAYAT TRANSACTION ---
         Route::get('/history/transactions', [TransactionHistoryController::class, 'index'])->name('history.transactions.index');

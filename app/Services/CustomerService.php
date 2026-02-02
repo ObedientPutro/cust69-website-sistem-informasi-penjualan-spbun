@@ -124,4 +124,30 @@ class CustomerService
         $customer->update(['is_active' => !$customer->is_active]);
         return $customer->is_active ? 'diaktifkan' : 'dinonaktifkan';
     }
+
+    /**
+     * Khusus Update Limit Kredit (Owner Only)
+     */
+    public function updateCreditLimit(Customer $customer, array $data): Customer
+    {
+        $currentLimit = $customer->credit_limit;
+        $amount = $data['amount'];
+        $type = $data['type'];
+
+        $newLimit = $currentLimit;
+
+        if ($type === 'add') {
+            $newLimit = $currentLimit + $amount;
+        } elseif ($type === 'subtract') {
+            $newLimit = $currentLimit - $amount;
+        }
+
+        if ($newLimit < 0) {
+            $newLimit = 0;
+        }
+
+        $customer->update(['credit_limit' => $newLimit]);
+
+        return $customer;
+    }
 }

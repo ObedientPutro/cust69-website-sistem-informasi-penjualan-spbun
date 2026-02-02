@@ -6,6 +6,7 @@ use App\Enums\ShipTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
+use App\Http\Requests\Customer\UpdateLimitRequest;
 use App\Models\Customer;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
@@ -106,6 +107,19 @@ class CustomerController extends Controller
             return redirect()->back()->with('success', "Pelanggan berhasil {$status}.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal update status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle Update Limit (Terpisah)
+     */
+    public function updateLimit(UpdateLimitRequest $request, Customer $customer)
+    {
+        try {
+            $this->customerService->updateCreditLimit($customer, $request->validated());
+            return redirect()->back()->with('success', 'Limit Kredit berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal update limit: ' . $e->getMessage());
         }
     }
 }

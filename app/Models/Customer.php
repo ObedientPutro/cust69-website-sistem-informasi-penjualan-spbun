@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\ShipTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,13 +35,20 @@ class Customer extends Model
         'ship_type' => ShipTypeEnum::class,
     ];
 
-    protected $appends = ['photo_url'];
+    protected $appends = ['photo_url', 'used_credit'];
 
     public function getPhotoUrlAttribute(): string
     {
         return $this->photo
             ? Storage::url($this->photo)
             : 'https://ui-avatars.com/api/?name=' . urlencode($this->owner_name) . '&color=F97316&background=FFF7ED';
+    }
+
+    public function getUsedCreditAttribute(): float
+    {
+        return (float) $this->transactions()
+            ->where('payment_status', PaymentStatusEnum::UNPAID)
+            ->sum('grand_total');
     }
 
     public function getLabelAttribute(): string

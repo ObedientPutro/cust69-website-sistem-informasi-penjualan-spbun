@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\History\UpdateRestockRequest;
 use App\Models\Product;
 use App\Models\Restock;
 use App\Traits\ExportHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class RestockHistoryController extends Controller
@@ -109,5 +111,34 @@ class RestockHistoryController extends Controller
         );
     }
 
+    /**
+     * Update Restock (Owner Only)
+     * Logic: Kembalikan stok lama -> Tambah stok baru
+     */
+    public function update(UpdateRestockRequest $request, string $id)
+    {
+        return DB::transaction(function () use ($request, $id) {
+            $restock = Restock::findOrFail($id);
+
+            // 1. Rollback Stok Lama (Kurangi stok produk asli sesuai volume lama)
+            $oldProduct = Product::findOrFail($restock->product_id);
+            $oldProduct->decrement('stock', $restock->volume_liter);
+
+            // 2. Update Data Restock
+            $restock->update([
+                'date' => $request->date,
+                'product_id' => $request->product_id,
+                'volume_liter' => $request->volume_liter,
+                'total_cost' => $request->total_cost,
+                'note' => $request->note,
+            ]);
+
+            // 3. Apply Stok Baru (Tambah ke produk baru/sama)
+            $newProduct = Product::findOrFail($request->product_id);
+            $newProduct->increment('stock', $request->volume_liter);
+
+            return redirect()->back()->with('success', 'Data Restock berhasil direvisi & Stok disesuaikan.');
+        });
+    }
 
 }
