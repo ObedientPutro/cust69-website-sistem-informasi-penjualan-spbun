@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Button from '@/Components/Ui/Button.vue';
 import TextInput from '@/Components/FormElements/TextInput.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
+import DecimalInput from '@/Components/FormElements/DecimalInput.vue';
 import SearchableSelect from '@/Components/FormElements/SearchableSelect.vue';
 import TextArea from '@/Components/FormElements/TextArea.vue';
-import DateTimePicker from '@/Components/FormElements/DateTimePicker.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
-import Modal from '@/Components/Ui/Modal.vue'; // Import Modal
+import Modal from '@/Components/Ui/Modal.vue';
 import Alert from '@/Components/Ui/Alert.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 
@@ -24,24 +24,27 @@ const page = usePage();
 const swal = useSweetAlert();
 const isOwner = computed(() => page.props.auth.user.role == 'owner');
 
+// --- DATE & TIME HANDLING ---
+const todayDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD (Fixed)
+const currentTime = ref(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })); // HH:mm (Editable)
+
+const form = useForm({
+    pump_shift_id: null as number | null,
+    transaction_date: '', // Will be combined on submit
+    customer_id: '',
+    payment_method: 'cash',
+    payment_proof: null as File | null,
+    note: '',
+    items: [{ product_id: '', quantity_liter: '0.000', price: 0 }]
+});
+
+// ... (Logic customerOptions, activeShifts, isShiftOpen, dll tetap sama) ...
 const customerOptions = computed(() => {
     return props.customers.map(c => ({
         value: c.id,
         label: `${c.ship_name} (${c.manager_name})`,
         subLabel: `Pemilik: ${c.owner_name || '-'} | GT: ${c.gross_tonnage}`
     }));
-});
-
-const form = useForm({
-    pump_shift_id: null as number | null,
-    transaction_date: new Date().toISOString().split('T')[0],
-    customer_id: '',
-    payment_method: 'cash',
-    payment_proof: null as File | null,
-    note: '',
-    items: [
-        { product_id: '', quantity_liter: '', price: 0 }
-    ]
 });
 
 const currentProductShiftId = computed(() => {
@@ -67,18 +70,11 @@ const isSubmitDisabled = computed(() => {
     return grandTotal.value <= 0 || isOverLimit.value || !isShiftOpen.value || form.processing;
 });
 
+// ... (Customer Modal Logic tetap sama) ...
 const isCustomerModalOpen = ref(false);
 const newCustomerForm = useForm({
-    manager_name: '',
-    owner_name: '',
-    ship_name: '',
-    ship_type: 'fishing',
-    gross_tonnage: 0,
-    pk_engine: 0,
-    phone: '',
-    address: '',
-    credit_limit: 0,
-    photo: null,
+    manager_name: '', owner_name: '', ship_name: '', ship_type: 'fishing',
+    gross_tonnage: 0, pk_engine: 0, phone: '', address: '', credit_limit: 0, photo: null,
 });
 
 const paymentMethods = [
@@ -111,12 +107,17 @@ const grandTotal = computed(() => {
     }, 0);
 });
 
+// --- SUBMIT ---
 const submit = () => {
+    // Gabungkan Tanggal Fixed + Jam Inputan
+    form.transaction_date = `${todayDate} ${currentTime.value}`;
+
     form.post(route('transactions.save'), {
         onSuccess: () => {
             form.reset();
-            form.transaction_date = new Date().toISOString().split('T')[0];
             form.items = [{ product_id: '', quantity_liter: '', price: 0 }];
+            // Reset jam ke sekarang lagi
+            currentTime.value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
             swal.toast('Transaksi Berhasil!', 'success');
         },
         preserveScroll: true
@@ -148,19 +149,32 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
 
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 shadow-sm">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-5 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                        Identitas & Waktu
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Waktu & Pelanggan
                     </h3>
 
                     <Alert v-if="Object.keys(form.errors).length > 0" variant="error" title="Perhatian" message="Cek kembali data inputan Anda." class="mb-5"/>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <DateTimePicker
-                            v-model="form.transaction_date"
-                            label="Waktu Transaksi"
-                            :disabled="!isOwner"
-                            :error="form.errors.transaction_date"
-                        />
+                        <div class="flex gap-3">
+                            <div class="w-2/3">
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal (Hari Ini)</label>
+                                <input
+                                    type="date"
+                                    :value="todayDate"
+                                    disabled
+                                    class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700"
+                                >
+                            </div>
+                            <div class="w-1/3">
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Jam</label>
+                                <input
+                                    type="time"
+                                    v-model="currentTime"
+                                    class="w-full rounded-lg border-gray-300 focus:border-brand-500 focus:ring-brand-500 dark:bg-gray-900 dark:border-gray-700"
+                                >
+                            </div>
+                        </div>
 
                         <div class="flex items-end gap-2">
                             <div class="w-full">
@@ -173,12 +187,7 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                                     required
                                 />
                             </div>
-                            <button
-                                @click="isCustomerModalOpen = true"
-                                type="button"
-                                class="flex-shrink-0 h-11 w-11 flex items-center justify-center rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition shadow-sm"
-                                title="Tambah Pelanggan Baru"
-                            >
+                            <button @click="isCustomerModalOpen = true" type="button" class="flex-shrink-0 h-11 w-11 flex items-center justify-center rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition shadow-sm" title="Tambah Pelanggan Baru">
                                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             </button>
                         </div>
@@ -241,7 +250,6 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                         <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                         Pilih Produk BBM
                     </h3>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Jenis Produk</label>
@@ -256,34 +264,24 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                                 </option>
                             </SelectInput>
                         </div>
-
-                        <TextInput
+                        <DecimalInput
                             v-model="form.items[0].quantity_liter"
-                            type="number"
-                            step="0.01"
-                            label="Volume Pembelian (Liter)"
-                            placeholder="0.00"
+                            label="Volume Pembelian"
+                            placeholder="0.000"
+                            suffix="Liter"
+                            required
                             :error="form.errors['items.0.quantity_liter']"
                         />
                     </div>
-
                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
                         <span class="text-sm text-gray-500">Harga Satuan</span>
-                        <span class="font-mono font-bold text-gray-800 dark:text-white text-lg">
-                                {{ formatRupiah(form.items[0].price) }} <span class="text-xs font-normal text-gray-400">/ Liter</span>
-                            </span>
+                        <span class="font-mono font-bold text-gray-800 dark:text-white text-lg">{{ formatRupiah(form.items[0].price) }} <span class="text-xs font-normal text-gray-400">/ Liter</span></span>
                     </div>
-
                     <div v-if="form.items[0].product_id && !isShiftOpen" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 animate-fade-in">
-                        <div class="p-2 bg-red-100 rounded-full text-red-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </div>
+                        <div class="p-2 bg-red-100 rounded-full text-red-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div>
                         <div>
                             <h4 class="font-bold text-red-800 text-lg">Shift Belum Dibuka!</h4>
-                            <p class="text-sm text-red-700 mt-1">
-                                Produk ini belum memiliki shift aktif hari ini.
-                                Silakan buka shift terlebih dahulu di menu <strong>Operasional Shift</strong> untuk melakukan transaksi.
-                            </p>
+                            <p class="text-sm text-red-700 mt-1">Produk ini belum memiliki shift aktif. Silakan buka shift terlebih dahulu.</p>
                         </div>
                     </div>
                 </div>
@@ -293,35 +291,21 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                         <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                         Pembayaran
                     </h3>
-
                     <div v-if="form.payment_method === 'bon' && isOverLimit" class="mb-5 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
                         <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <div>
                             <h4 class="font-bold text-red-700">Limit Kredit Tidak Mencukupi!</h4>
-                            <p class="text-sm text-red-600 mt-1">Total tagihan melebihi sisa limit kredit pelanggan. Transaksi tidak dapat diproses dengan metode Bon.</p>
+                            <p class="text-sm text-red-600 mt-1">Total tagihan melebihi sisa limit kredit pelanggan.</p>
                         </div>
                     </div>
-
                     <div class="mb-5">
-                        <SelectInput
-                            v-model="form.payment_method"
-                            label="Metode Pembayaran"
-                            :error="form.errors.payment_method"
-                        >
+                        <SelectInput v-model="form.payment_method" label="Metode Pembayaran" :error="form.errors.payment_method">
                             <option v-for="opt in paymentMethods" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                         </SelectInput>
                     </div>
-
                     <div v-if="form.payment_method === 'transfer'" class="animate-fade-in">
-                        <FileDropzone
-                            v-model="form.payment_proof"
-                            label="Upload Bukti Transfer"
-                            accept="image/*"
-                            :error="form.errors.payment_proof"
-                            class="w-full"
-                        />
+                        <FileDropzone v-model="form.payment_proof" label="Upload Bukti Transfer" accept="image/*" :error="form.errors.payment_proof" class="w-full" />
                     </div>
-
                     <div class="mt-5">
                         <TextArea v-model="form.note" label="Catatan Tambahan (Opsional)" placeholder="Contoh: Plat nomor kendaraan..." />
                     </div>
@@ -333,134 +317,55 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                 <div class="rounded-2xl bg-brand-600 text-white shadow-xl overflow-hidden">
                     <div class="p-6">
                         <p class="text-brand-100 text-sm font-medium uppercase tracking-wider mb-1">Total Tagihan</p>
-                        <h2 class="text-4xl font-extrabold tracking-tight truncate">
-                            {{ formatRupiah(grandTotal) }}
-                        </h2>
+                        <h2 class="text-4xl font-extrabold tracking-tight truncate">{{ formatRupiah(grandTotal) }}</h2>
                     </div>
-
                     <div class="bg-brand-700/50 p-6 backdrop-blur-sm">
                         <div class="space-y-3 mb-6">
                             <div class="flex justify-between items-center text-sm text-brand-100 border-b border-white/10 pb-2">
-                                <span>Pelanggan</span>
-                                <span class="font-medium truncate max-w-[150px]">
-                                    {{ selectedCustomer ? selectedCustomer.manager_name : '-' }}
-                                </span>
+                                <span>Pelanggan</span><span class="font-medium truncate max-w-[150px]">{{ selectedCustomer ? selectedCustomer.manager_name : '-' }}</span>
                             </div>
                             <div class="flex justify-between items-center text-sm text-brand-100 border-b border-white/10 pb-2">
-                                <span>Produk</span>
-                                <span class="font-medium">
-                                    {{ products.find(p => p.id == form.items[0].product_id)?.name || '-' }}
-                                </span>
+                                <span>Produk</span><span class="font-medium">{{ products.find(p => p.id == form.items[0].product_id)?.name || '-' }}</span>
                             </div>
                             <div class="flex justify-between items-center text-sm text-brand-100 border-b border-white/10 pb-2">
-                                <span>Volume</span>
-                                <span class="font-medium">{{ form.items[0].quantity_liter || 0 }} Liter</span>
+                                <span>Volume</span><span class="font-medium">{{ form.items[0].quantity_liter || 0 }} Liter</span>
                             </div>
                             <div class="flex justify-between items-center text-sm text-brand-100">
-                                <span>Metode</span>
-                                <span class="font-bold bg-white/20 px-2 py-0.5 rounded capitalize">{{ form.payment_method }}</span>
+                                <span>Metode</span><span class="font-bold bg-white/20 px-2 py-0.5 rounded capitalize">{{ form.payment_method }}</span>
                             </div>
                         </div>
-
-                        <Button
-                            @click="submit"
-                            size="md"
-                            class="w-full justify-center py-4 text-lg font-bold text-gray-900 border-none shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                            :processing="form.processing"
-                            :disabled="isSubmitDisabled"
-                        >
+                        <Button @click="submit" size="md" class="w-full justify-center py-4 text-lg font-bold text-gray-900 border-none shadow-lg disabled:opacity-70 disabled:cursor-not-allowed" :processing="form.processing" :disabled="isSubmitDisabled">
                             <span v-if="!isShiftOpen">SHIFT TERKUNCI</span>
                             <span v-else-if="!form.processing">PROSES BAYAR</span>
                             <span v-else>Memproses...</span>
                         </Button>
                     </div>
                 </div>
-
-                <p class="mt-4 text-xs text-center text-gray-400">
-                    Pastikan data sudah benar. Transaksi yang disimpan tidak dapat diedit/dihapus oleh operator.
-                </p>
             </div>
 
         </div>
 
         <Modal :show="isCustomerModalOpen" title="Tambah Pelanggan Baru" @close="isCustomerModalOpen = false">
             <form @submit.prevent="submitNewCustomer" class="space-y-4">
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <TextInput
-                        v-model="newCustomerForm.manager_name"
-                        label="Nama Pengurus (Sesuai KTP)"
-                        required
-                        :error="newCustomerForm.errors.manager_name"
-                    />
-                    <TextInput
-                        v-model="newCustomerForm.owner_name"
-                        label="Nama Pemilik Kapal"
-                        required
-                        placeholder="Wajib diisi"
-                        :error="newCustomerForm.errors.owner_name"
-                    />
+                    <TextInput v-model="newCustomerForm.manager_name" label="Nama Pengurus" required :error="newCustomerForm.errors.manager_name" />
+                    <TextInput v-model="newCustomerForm.owner_name" label="Nama Pemilik" required :error="newCustomerForm.errors.owner_name" />
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <TextInput
-                        v-model="newCustomerForm.ship_name"
-                        label="Nama Kapal"
-                        required
-                        :error="newCustomerForm.errors.ship_name"
-                    />
-                    <SelectInput
-                        v-model="newCustomerForm.ship_type"
-                        label="Jenis Kapal"
-                        required
-                        :error="newCustomerForm.errors.ship_type"
-                    >
-                        <option v-for="type in shipTypes" :key="type.value" :value="type.value">
-                            {{ type.label }}
-                        </option>
+                    <TextInput v-model="newCustomerForm.ship_name" label="Nama Kapal" required :error="newCustomerForm.errors.ship_name" />
+                    <SelectInput v-model="newCustomerForm.ship_type" label="Jenis Kapal" required :error="newCustomerForm.errors.ship_type">
+                        <option v-for="type in shipTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
                     </SelectInput>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
-                    <TextInput
-                        v-model="newCustomerForm.gross_tonnage"
-                        type="number"
-                        step="0.01"
-                        label="GT Kapal"
-                        required
-                        :error="newCustomerForm.errors.gross_tonnage"
-                    />
-                    <TextInput
-                        v-model="newCustomerForm.pk_engine"
-                        type="number"
-                        step="0.01"
-                        label="PK Mesin"
-                        required
-                        :error="newCustomerForm.errors.pk_engine"
-                    />
+                    <TextInput v-model="newCustomerForm.gross_tonnage" type="number" step="0.01" label="GT Kapal" required :error="newCustomerForm.errors.gross_tonnage" />
+                    <TextInput v-model="newCustomerForm.pk_engine" type="number" step="0.01" label="PK Mesin" required :error="newCustomerForm.errors.pk_engine" />
                 </div>
-
-                <TextInput
-                    v-model="newCustomerForm.phone"
-                    label="No. Handphone"
-                    required
-                    :error="newCustomerForm.errors.phone"
-                />
-
-                <TextArea
-                    v-model="newCustomerForm.address"
-                    label="Alamat Lengkap"
-                    required
-                    :error="newCustomerForm.errors.address"
-                />
-
-                <div class="p-3 bg-blue-50 rounded-lg text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                    <span class="font-bold">Info:</span> Pelanggan baru otomatis memiliki <strong>Limit Kredit 0</strong>. Silakan hubungi Owner untuk menaikkan limit jika ingin transaksi Bon.
-                </div>
-
+                <TextInput v-model="newCustomerForm.phone" label="No. HP" required :error="newCustomerForm.errors.phone" />
+                <TextArea v-model="newCustomerForm.address" label="Alamat" required :error="newCustomerForm.errors.address" />
                 <div class="mt-6 flex justify-end gap-3 border-t pt-4">
                     <Button type="button" variant="outline" @click="isCustomerModalOpen = false">Batal</Button>
-                    <Button type="submit" :processing="newCustomerForm.processing">Simpan Pelanggan</Button>
+                    <Button type="submit" :processing="newCustomerForm.processing">Simpan</Button>
                 </div>
             </form>
         </Modal>
@@ -469,11 +374,6 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
 </template>
 
 <style scoped>
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 </style>

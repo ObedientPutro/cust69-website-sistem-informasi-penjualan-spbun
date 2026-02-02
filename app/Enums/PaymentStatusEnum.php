@@ -9,6 +9,7 @@ enum PaymentStatusEnum : string
     case PAID = 'paid';
     case UNPAID = 'unpaid';
     case PENDING = 'pending';
+    case RETURNED = 'returned';
 
     public function getLabel(): string
     {
@@ -16,6 +17,7 @@ enum PaymentStatusEnum : string
             self::PAID => 'Lunas',
             self::UNPAID => 'Belum Lunas',
             self::PENDING => 'Menunggu Konfirmasi',
+            self::RETURNED => 'Dikembalikan'
         };
     }
 

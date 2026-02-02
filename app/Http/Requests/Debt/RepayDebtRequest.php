@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Transaction;
+namespace App\Http\Requests\Debt;
 
 use App\Enums\PaymentMethodEnum;
-use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
-class UpdateTransactionRequest extends FormRequest
+class RepayDebtRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,12 +25,20 @@ class UpdateTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'transaction_date' => ['required', 'date'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', Rule::exists(Product::class, 'id')],
-            'items.*.quantity_liter' => ['required', 'numeric', 'min:0.01'],
-            'note' => ['nullable', 'string', 'max:255'],
+            'repayment_method' => ['required', Rule::enum(PaymentMethodEnum::class)],
+
+            'payment_proof' => [
+                'nullable',
+                'image', 'max:5120',
+                Rule::requiredIf(fn() => $this->repayment_method === PaymentMethodEnum::TRANSFER->value)
+            ],
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'payment_proof.required_if' => 'Bukti transfer wajib diunggah untuk metode Transfer.',
+        ];
+    }
 }

@@ -32,9 +32,21 @@ class TransactionHistoryController extends Controller
 
         $query = $this->transactionService->getHistory($filters);
 
+        $baseQuery = clone $query;
+        $totalCount = (clone $baseQuery)->count();
+        $totalOmset = (clone $baseQuery)
+            ->where('payment_status', '!=', 'returned')
+            ->sum('grand_total');
+
+        $voidQuery = (clone $baseQuery)->where('payment_status', 'returned');
+        $totalVoidCount = $voidQuery->count();
+        $totalVoidAmount = $voidQuery->sum('grand_total');
+
         $summary = [
-            'total_omset' => (clone $query)->sum('grand_total'),
-            'total_transaksi' => (clone $query)->count(),
+            'total_transaksi' => $totalCount,
+            'total_omset' => $totalOmset,
+            'total_void_count' => $totalVoidCount,
+            'total_void_amount' => $totalVoidAmount,
         ];
 
         if ($request->has('sort') && $request->has('direction')) {

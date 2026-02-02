@@ -14,6 +14,7 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->string('trx_code', 30)->unique();
             $table->foreignId('user_id')->constrained();
             $table->foreignId('customer_id')->constrained();
             $table->dateTime('transaction_date');
@@ -32,7 +33,6 @@ return new class extends Migration
             $table->decimal('grand_total', 15, 2);
 
             // Audit Trail
-            $table->boolean('was_stock_minus')->default(false);
             $table->text('note')->nullable();
 
             $table->timestamps();

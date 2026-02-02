@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Edit, Update, Destroy (Itu jatah Owner)
     Route::get('/pos', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.save');
+    Route::get('/transactions/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
 
     // --- MODUL HUTANG ---
     Route::get('/debts', [DebtController::class, 'index'])->name('debts.index');
@@ -108,7 +109,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // CRUD Transaksi (Edit & Hapus & Update Backdate)
         Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
-        Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.delete');
+        Route::post('/transactions/{transaction}', [TransactionController::class, 'return'])->name('transactions.return');
+
 
         // CRUD WEB SETTINGS
         Route::get('/settings', [SiteSettingController::class, 'index'])->name('settings.index');

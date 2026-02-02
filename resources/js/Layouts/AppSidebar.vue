@@ -38,12 +38,12 @@ const menuGroupsRaw = [
                         roles: ['owner', 'operator'],
                     },
                     {
-                        name: 'Transaksi Bon',
+                        name: 'Manajemen Piutang',
                         path: route('debts.index'),
                         roles: ['owner', 'operator'],
                     },
                     {
-                        name: 'Kelola Shift',
+                        name: 'Shift Totalisator',
                         path: route('shifts.index'),
                         roles: ['owner', 'operator'],
                     },

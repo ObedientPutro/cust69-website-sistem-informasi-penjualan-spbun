@@ -35,6 +35,20 @@ class ShiftController extends Controller
 
         $query = PumpShift::with(['product', 'opener:id,name', 'closer:id,name']);
 
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('opened_at', [
+                $startDate . ' 00:00:00',
+                $endDate . ' 23:59:59'
+            ]);
+        }
+
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->input('product_id'));
+        }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -60,7 +74,7 @@ class ShiftController extends Controller
             'products' => $products,
             'activeShifts' => $activeShifts,
             'history' => $history,
-            'filters' => $request->only(['search', 'sort', 'direction']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'start_date', 'end_date', 'product_id']),
         ]);
     }
 

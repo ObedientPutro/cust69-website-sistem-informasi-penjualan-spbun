@@ -7,9 +7,11 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\UserRoleEnum;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\PumpShift;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Traits\NotificationHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,12 +23,23 @@ class TransactionService
     {
         return DB::transaction(function () use ($data, $fileProof) {
             $user = Auth::user();
+            $trxCode = $this->generateTrxCode();
 
             $grandTotal = 0;
             $itemsPayload = [];
 
+            $firstProductId = $data['items'][0]['product_id'];
+            $pumpShiftId = $this->findActiveShiftId($firstProductId);
+
             foreach ($data['items'] as $item) {
-                $product = Product::findOrFail($item['product_id']);
+                $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
+
+                if ($product->stock < $item['quantity_liter']) {
+                    throw ValidationException::withMessages([
+                        'items.0.quantity_liter' => "Stok tidak cukup. Sisa: {$product->stock} L, Diminta: {$item['quantity_liter']} L"
+                    ]);
+                }
+
                 $subtotal = $item['quantity_liter'] * $product->price;
                 $grandTotal += $subtotal;
 
@@ -60,31 +73,28 @@ class TransactionService
                 $customer->decrement('credit_limit', $grandTotal);
             }
 
-            if ($user->role != UserRoleEnum::OWNER->value) {
-                $transactionDate = Carbon::now();
-            } else {
-                $inputDate = Carbon::parse($data['transaction_date']);
-                $transactionDate = $inputDate->setTimeFrom(Carbon::now());
-            }
+            $transactionDate = ($user->role != UserRoleEnum::OWNER->value)
+                ? Carbon::now()
+                : Carbon::parse($data['transaction_date'])->setTimeFrom(Carbon::now());
 
-            $proofPath = null;
-            if ($data['payment_method'] == PaymentMethodEnum::TRANSFER->value && $fileProof) {
-                $proofPath = $fileProof->store('payment_proofs', 'public');
-            }
+            $proofPath = ($data['payment_method'] == PaymentMethodEnum::TRANSFER->value && $fileProof)
+                ? $fileProof->store('payment_proofs', 'public')
+                : null;
 
             $paymentStatus = ($data['payment_method'] == PaymentMethodEnum::BON->value)
                 ? PaymentStatusEnum::UNPAID
                 : PaymentStatusEnum::PAID;
 
             $transaction = Transaction::create([
+                'trx_code' => $trxCode,
                 'user_id' => $user->id,
                 'customer_id' => $data['customer_id'] ?? null,
+                'pump_shift_id' => $pumpShiftId,
                 'transaction_date' => $transactionDate,
                 'payment_method' => $data['payment_method'],
                 'payment_status' => $paymentStatus,
                 'payment_proof' => $proofPath,
                 'grand_total' => $grandTotal,
-                'was_stock_minus' => collect($itemsPayload)->contains(fn($i) => $i['product']->stock < 0), // Cek stok minus
                 'note' => $data['note'] ?? null,
             ]);
 
@@ -123,33 +133,99 @@ class TransactionService
     }
 
     /**
-     * Handle Pelunasan Hutang (Bon)
+     * UPDATE TRANSAKSI (HANYA OWNER)
+     * Logic: Rollback stok lama -> Hitung ulang -> Potong stok baru -> Update Data
      */
-    public function processRepayment(Transaction $transaction, array $data, ?UploadedFile $fileProof = null): Transaction
+    public function updateTransaction(Transaction $transaction, array $data): Transaction
     {
-        return DB::transaction(function () use ($transaction, $data, $fileProof) {
-            if ($transaction->payment_status === PaymentStatusEnum::PAID) {
-                throw ValidationException::withMessages(['payment_status' => 'Transaksi ini sudah lunas.']);
+        return DB::transaction(function () use ($transaction, $data) {
+            // A. ROLLBACK: Kembalikan Stok & Limit Kredit Lama
+            foreach ($transaction->items as $oldItem) {
+                $oldItem->product->increment('stock', $oldItem->quantity_liter);
+                $oldItem->delete(); // Hapus item lama
             }
 
-            $updateData = [
-                'payment_status'   => PaymentStatusEnum::PAID,
-                'repayment_method' => $data['repayment_method'],
-                'paid_at'          => Carbon::now(),
-            ];
-
-            if ($fileProof) {
-                $updateData['payment_proof'] = $fileProof->store('repayment_proofs', 'public');
+            if ($transaction->payment_method === PaymentMethodEnum::BON && $transaction->customer_id) {
+                // Kembalikan limit kredit pelanggan (karena nanti akan dipotong lagi dengan nominal baru)
+                $transaction->customer->increment('credit_limit', $transaction->grand_total);
             }
 
-            $transaction->update($updateData);
+            // B. PROSES ULANG: Hitung Data Baru
+            $grandTotal = 0;
 
-            if ($transaction->customer_id) {
-                $transaction->customer()->increment('credit_limit', $transaction->grand_total);
+            foreach ($data['items'] as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                $subtotal = $item['quantity_liter'] * $product->price;
+                $grandTotal += $subtotal;
+
+                // Create Item Baru
+                TransactionItem::create([
+                    'transaction_id' => $transaction->id,
+                    'product_id' => $product->id,
+                    'quantity_liter' => $item['quantity_liter'],
+                    'price_per_liter' => $product->price,
+                    'cost_per_liter' => $product->cost_price,
+                    'subtotal' => $subtotal,
+                ]);
+
+                // Potong Stok Baru
+                $product->decrement('stock', $item['quantity_liter']);
             }
+
+            // C. UPDATE DATA PELANGGAN (JIKA BON)
+            if ($transaction->payment_method === PaymentMethodEnum::BON && $transaction->customer_id) {
+                $transaction->customer->decrement('credit_limit', $grandTotal);
+            }
+
+            // D. UPDATE HEADER TRANSAKSI
+            $transaction->update([
+                'transaction_date' => Carbon::parse($data['transaction_date'])->setTimeFrom($transaction->transaction_date),
+                'grand_total' => $grandTotal,
+                'note' => $data['note'] ?? $transaction->note,
+            ]);
 
             return $transaction;
         });
+    }
+
+    /**
+     * Return Transaksi (Void)
+     * Logic: Stok dikembalikan, Status jadi 'RETURNED', Grand Total dianggap 0 di laporan
+     */
+    public function returnTransaction(Transaction $transaction, string $reason): Transaction
+    {
+        return DB::transaction(function () use ($transaction, $reason) {
+            foreach ($transaction->items as $item) {
+                $item->product->increment('stock', $item->quantity_liter);
+            }
+
+            if ($transaction->payment_method == PaymentMethodEnum::BON && $transaction->customer_id) {
+                $transaction->customer->increment('credit_limit', $transaction->grand_total);
+            }
+
+            $transaction->update([
+                'payment_status' => PaymentStatusEnum::RETURNED,
+                'note' => $transaction->note . " [RETURNED: $reason]",
+            ]);
+
+            return $transaction;
+        });
+    }
+
+    /**
+     * Generate PDF Struk
+     * Service yang mengembalikan object PDF stream
+     */
+    public function generateReceiptPdf(Transaction $transaction): \Barryvdh\DomPDF\PDF
+    {
+        $pdf = Pdf::loadView('exports.receipt_pdf', [
+            'trx' => $transaction,
+            'settings' => \App\Models\SiteSetting::first(),
+        ]);
+
+        $pdf->setPaper([0, 0, 226.77, 600], 'portrait');
+
+        return $pdf;
     }
 
     /**
@@ -190,5 +266,35 @@ class TransactionService
         }
 
         return $query->latest('transaction_date');
+    }
+
+    /**
+     * Mencari Shift Aktif berdasarkan Produk
+     */
+    private function findActiveShiftId($productId)
+    {
+        $shift = PumpShift::where('product_id', $productId)
+            ->where('status', 'open')
+            ->latest()
+            ->first();
+
+        return $shift ? $shift->id : null;
+    }
+
+    /**
+     * Generate Kode Transaksi Unik: TRX-YYMMDD-XXXX
+     */
+    private function generateTrxCode(): string
+    {
+        $dateCode = Carbon::now()->format('ymd');
+        $lastTrx = Transaction::whereDate('created_at', Carbon::today())->latest()->first();
+
+        if ($lastTrx && preg_match('/TRX-\d+-(\d+)/', $lastTrx->trx_code, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        return 'TRX-' . $dateCode . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 }

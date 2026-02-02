@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { debounce, pickBy } from 'lodash';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DataTable from '@/Components/Tables/DataTable.vue';
 import Button from '@/Components/Ui/Button.vue';
 import TextInput from '@/Components/FormElements/TextInput.vue';
+import SelectInput from '@/Components/FormElements/SelectInput.vue';
+import DatePicker from '@/Components/FormElements/DatePicker.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import Badge from '@/Components/Ui/Badge.vue';
 import Modal from '@/Components/Ui/Modal.vue';
@@ -29,6 +32,23 @@ const columns = [
     { label: 'Terjual (L)', key: 'total_sales_liter', sortable: true, align: 'right' },
     { label: 'Status', key: 'status', sortable: true, align: 'center' },
 ];
+
+const filterForm = ref({
+    search: props.filters.search || '',
+    start_date: props.filters.start_date || '',
+    end_date: props.filters.end_date || '',
+    product_id: props.filters.product_id || '',
+});
+
+const applyFilter = debounce(() => {
+    router.get(route('shifts.index'), pickBy(filterForm.value), {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    });
+}, 300);
+
+watch(filterForm, () => applyFilter(), { deep: true });
 
 // --- FORM & MODAL LOGIC (Tetap Sama) ---
 const openForm = useForm({
@@ -184,6 +204,22 @@ const formatNumber = (num: number | string) => {
             :filters="filters"
             :enable-actions="false"
         >
+            <template #filters>
+                <div class="flex flex-col md:flex-row gap-3 w-full">
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <div class="w-32"><DatePicker v-model="filterForm.start_date" placeholder="Mulai" /></div>
+                        <div class="w-32"><DatePicker v-model="filterForm.end_date" placeholder="Sampai" /></div>
+                    </div>
+
+                    <div class="w-full md:w-48">
+                        <SelectInput v-model="filterForm.product_id" class="text-sm w-full">
+                            <option value="">Semua Produk</option>
+                            <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+                        </SelectInput>
+                    </div>
+                </div>
+            </template>
+
             <template #cell-opened_at="{ row }">
                 <div class="text-sm">
                     <span class="block font-medium text-gray-800 dark:text-white">{{ formatDate(row.opened_at) }}</span>

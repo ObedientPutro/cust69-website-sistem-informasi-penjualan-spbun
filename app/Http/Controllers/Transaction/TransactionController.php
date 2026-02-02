@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Transaction;
 use App\Enums\ShipTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Transaction\StoreTransactionRequest;
+use App\Http\Requests\Transaction\UpdateTransactionRequest;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\Transaction;
 use App\Services\ShiftService;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
@@ -72,7 +74,7 @@ class TransactionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Transaction $transaction)
     {
         redirect(route('dashboard'));
     }
@@ -80,7 +82,7 @@ class TransactionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Transaction $transaction)
     {
         redirect(route('dashboard'));
     }
@@ -88,16 +90,48 @@ class TransactionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateTransactionRequest $request, string $id)
     {
-        redirect(route('dashboard'));
+        try {
+            $transaction = Transaction::findOrFail($id);
+            $this->transactionService->updateTransaction($transaction, $request->validated());
+
+            return redirect()->back()->with('success', 'Transaksi berhasil direvisi.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal update: ' . $e->getMessage());
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Transaction $transaction)
     {
         redirect(route('dashboard'));
+    }
+
+    /**
+     * Return / Void Transaksi
+     */
+    public function return(Request $request, Transaction $transaction)
+    {
+        $request->validate(['reason' => 'required|string|max:255']);
+
+        try {
+            $this->transactionService->returnTransaction($transaction, $request->reason);
+
+            return redirect()->back()->with('success', 'Transaksi berhasil di-return (Stok dikembalikan).');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal return: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Cetak Struk (PDF)
+     */
+    public function print(Transaction $transaction)
+    {
+        $pdf = $this->transactionService->generateReceiptPdf($transaction);
+        return $pdf->stream("Struk_{$transaction->trx_code}.pdf");
     }
 }
