@@ -244,7 +244,7 @@ const openImageViewer = (url: string, alt: string) => {
                     </button>
 
                     <button
-                        @click="deleteUser(row.id)"
+                        @click="deleteUser(row)"
                         class="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 transition hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                         title="Hapus Data"
                     >

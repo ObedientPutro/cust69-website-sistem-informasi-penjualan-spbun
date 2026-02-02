@@ -4,12 +4,11 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useSidebar } from '@/Composables/useSidebar';
 import {
     ChevronDownIcon,
-    DocsIcon,
     GridIcon,
     HorizontalDots,
-    ListIcon,
     PieChartIcon,
-    TableIcon,
+    UserGroupIcon,
+    UserCircleIcon,
     SendIcon,
     SettingsIcon,
     BoxIcon,
@@ -25,7 +24,7 @@ const menuGroupsRaw = [
             {
                 icon: GridIcon,
                 name: 'Dashboard',
-                path: '/dashboard',
+                path: route('dashboard'),
                 roles: ['owner', 'operator'],
             },
             {
@@ -35,93 +34,87 @@ const menuGroupsRaw = [
                 subItems: [
                     {
                         name: 'POS Kasir',
-                        path: '/pos',
+                        path: route('transactions.create'),
                         roles: ['owner', 'operator'],
                     },
                     {
                         name: 'Transaksi Bon',
-                        path: '/debts',
+                        path: route('debts.index'),
                         roles: ['owner', 'operator'],
                     },
                     {
-                        name: 'Shift POS',
-                        path: '/shifts',
+                        name: 'Kelola Shift',
+                        path: route('shifts.index'),
                         roles: ['owner', 'operator'],
-                    },
-                ],
-            },
-            {
-                name: 'Master Data',
-                icon: ListIcon,
-                roles: ['owner'],
-                subItems: [
-                    {
-                        name: 'Kelola User',
-                        path: '/users',
-                        roles: ['owner'],
-                    },
-                    {
-                        name: 'Produk BBM',
-                        path: '/products',
-                        roles: ['owner'],
-                    },
-                    {
-                        name: 'Kelola Customer',
-                        path: '/customers',
-                        roles: ['owner'],
-                    },
-                ],
-            },
-            {
-                name: 'Riwayat / Mutasi',
-                icon: TableIcon,
-                roles: ['owner'],
-                subItems: [
-                    {
-                        name: "Pembelian Stock",
-                        path: "/history/restocks",
-                        roles: ['owner']
-                    },
-                    {
-                        name: "Riwayat Sounding",
-                        path: "/history/soundings",
-                        roles: ['owner']
                     },
                     {
                         name: 'Mutasi Transaksi',
-                        path: '/history/transactions',
-                        roles: ['owner'],
+                        path: route('history.transactions.index'),
+                        roles: ['owner', 'operator'],
+                    },
+                ],
+            },
+            {
+                icon: UserCircleIcon,
+                name: 'Kelola Pelanggan',
+                path: route('customers.index'),
+                roles: ['owner', 'operator'],
+            },
+            {
+                name: 'Produk BBM',
+                icon: BoxIcon,
+                roles: ['owner', 'operator'],
+                subItems: [
+                    {
+                        name: 'Kelola Data Produk',
+                        path: route('products.index'),
+                        roles: ['owner', 'operator'],
+                    },
+                    {
+                        name: 'Riwayat Pembelian Stock',
+                        path: route('restock-history.index'),
+                        roles: ['owner', 'operator'],
+                    },
+                    {
+                        name: 'Riwayat Sounding',
+                        path: route('sounding-history.index'),
+                        roles: ['owner', 'operator'],
                     },
                 ],
             },
         ],
     },
     {
-        title: 'Laporan',
+        title: 'Menu Khusus Owner',
         items: [
             {
+                name: 'Laporan Transaksi',
                 icon: PieChartIcon,
-                name: 'Laporan Penjualan',
-                path: '/reports/sales',
                 roles: ['owner'],
+                subItems: [
+                    {
+                        name: 'Laporan Penjualan',
+                        path: route('reports.sales'),
+                        roles: ['owner'],
+                    },
+                    {
+                        name: 'Laporan Laba Rugi',
+                        path: route('reports.profit'),
+                        roles: ['owner'],
+                    },
+                    {
+                        name: 'Laporan Stok',
+                        path: route('reports.stock'),
+                        roles: ['owner'],
+                    },
+                ],
             },
             {
-                icon: DocsIcon,
-                name: 'Laporan Laba Rugi',
-                path: '/reports/profit',
+                icon: UserGroupIcon,
+                name: 'Kelola Akun Pengguna',
+                path: route('users.index'),
                 roles: ['owner'],
             },
-            {
-                icon: BoxIcon,
-                name: 'Laporan Stok',
-                path: '/reports/stock',
-                roles: ['owner'],
-            },
-        ],
-    },
-    {
-        title: 'Pengaturan',
-        items: [
             {
                 icon: SettingsIcon,
                 name: 'Pengaturan Website',
@@ -146,7 +139,23 @@ const menuGroups = computed(() => {
     }).filter(group => group.items.length > 0);
 });
 
-const isActive = (path) => window.location.pathname.startsWith(path);
+const getPathFromUrl = (url) => {
+    if (!url) return '';
+    try {
+        const parsedUrl = new URL(url, window.location.origin);
+        return parsedUrl.pathname;
+    } catch (e) {
+        return url;
+    }
+};
+
+const isActive = (url) => {
+    const currentPath = window.location.pathname;
+    const targetPath = getPathFromUrl(url);
+    if (currentPath === targetPath) return true;
+    return targetPath !== '/' && currentPath.startsWith(targetPath + '/');
+
+};
 const toggleSubmenu = (groupIndex, itemIndex) => {
     const key = `${groupIndex}-${itemIndex}`;
     openSubmenu.value = openSubmenu.value === key ? null : key;
@@ -154,11 +163,10 @@ const toggleSubmenu = (groupIndex, itemIndex) => {
 const isSubmenuOpen = (groupIndex, itemIndex) => `${groupIndex}-${itemIndex}` === openSubmenu.value;
 
 const checkActiveMenu = () => {
-    const currentPath = window.location.pathname;
     menuGroups.value.forEach((group, gIndex) => {
         group.items.forEach((item, iIndex) => {
             if (item.subItems) {
-                const hasActiveChild = item.subItems.some(sub => currentPath.startsWith(sub.path));
+                const hasActiveChild = item.subItems.some(sub => isActive(sub.path));
                 if (hasActiveChild) {
                     openSubmenu.value = `${gIndex}-${iIndex}`;
                 }
