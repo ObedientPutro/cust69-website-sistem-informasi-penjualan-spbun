@@ -6,6 +6,7 @@ use App\Models\SiteSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportHelper
@@ -18,8 +19,11 @@ class ExportHelper
         // Inject Settings ke semua PDF secara otomatis
         $data['settings'] = SiteSetting::first();
 
+        $data['settings']->logoLeftBase64 = self::imageToBase64($data['settings']->logo_left) ?? null;
+        $data['settings']->logoRightBase64 = self::imageToBase64($data['settings']->logo_right) ?? null;
+
         $pdf = Pdf::loadView($view, $data);
-        $pdf->setPaper('a4', 'landscape'); // Default landscape untuk tabel lebar
+        $pdf->setPaper('a4', 'landscape');
 
         return $pdf->download($filename);
     }
@@ -55,5 +59,22 @@ class ExportHelper
         }, $filename);
     }
 
+    // --- HELPER FUNCTION Base64 ---
+    private static function imageToBase64($path): ?string
+    {
+        if (!$path) return null;
+
+        if (!Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        try {
+            $data = Storage::disk('public')->get($path);
+            $mimeType = Storage::disk('public')->mimeType($path);
+            return 'data:' . $mimeType . ';base64,' . base64_encode($data);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 
 }

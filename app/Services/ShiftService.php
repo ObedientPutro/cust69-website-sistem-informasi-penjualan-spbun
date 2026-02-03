@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PumpShiftStatusEnum;
 use App\Models\PumpShift;
 use App\Models\Transaction;
@@ -62,7 +63,6 @@ class ShiftService
     public function closeShift(PumpShift $shift, array $data): PumpShift
     {
         return DB::transaction(function () use ($shift, $data) {
-            // ... (Validasi closing_totalizer < opening TETAP SAMA) ...
             if ($data['closing_totalizer'] < $shift->opening_totalizer) {
                 throw ValidationException::withMessages([
                     'closing_totalizer' => "Meteran akhir ({$data['closing_totalizer']}) tidak boleh lebih kecil dari awal ({$shift->opening_totalizer})."
@@ -72,14 +72,19 @@ class ShiftService
             // 1. Hitung Fisik (Totalizer)
             $literSoldPhysical = $data['closing_totalizer'] - $shift->opening_totalizer;
 
-            // 2. Hitung Sistem (Transaksi yang tercatat di shift ini)
+            // 2. Hitung Sistem (Transaksi Valid Saja)
             // Asumsi: Transaksi memiliki pump_shift_id, atau berdasarkan range waktu
-            $systemSummary = Transaction::where('pump_shift_id', $shift->id)
-                ->orWhere(function($q) use ($shift) {
-                    // Fallback jika pump_shift_id null, cari berdasarkan range waktu & produk
-                    $q->whereBetween('transaction_date', [$shift->opened_at, Carbon::now()])
-                        ->whereHas('items', fn($i) => $i->where('product_id', $shift->product_id));
+            $systemSummary = Transaction::query()
+                ->where(function ($query) use ($shift) {
+                    // Kelompokkan logika pencarian (ID Shift ATAU Range Waktu)
+                    $query->where('pump_shift_id', $shift->id)
+                        ->orWhere(function($q) use ($shift) {
+                            $q->whereBetween('transaction_date', [$shift->opened_at, Carbon::now()])
+                                ->whereHas('items', fn($i) => $i->where('product_id', $shift->product_id));
+                        });
                 })
+                // Filter Wajib: Status BUKAN returned/void
+                ->where('payment_status', '!=', PaymentStatusEnum::RETURNED->value)
                 ->with('items')
                 ->get();
 

@@ -30,10 +30,8 @@ class ReportService
             });
 
         // 2. Ambil Data Transaksi (Sistem)
-        // REVISI: KITA AMBIL SEMUA (TERMASUK RETURNED) untuk keperluan pencocokan Liter
         $transactions = Transaction::with(['items.product', 'user', 'customer'])
             ->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
-            // HAPUS filter exclude 'returned' disini agar liter return tetap terambil
             ->when($productId, function($q) use ($productId) {
                 $q->whereHas('items', fn($i) => $i->where('product_id', $productId));
             })
@@ -61,20 +59,19 @@ class ReportService
 
             // --- B. ANALISA SISTEM ---
 
-            // 1. Liter: Hitung SEMUA (termasuk Return) agar match dengan Totalisator
-            $systemLiter = $dayTrans->sum(fn($t) => $t->items->sum('quantity_liter'));
-
-            // 2. Uang: HANYA hitung yang VALID (Bukan Return)
+            // 1. Filter Transaksi Valid DULU (Buang yang Returned)
             $validTrans = $dayTrans->where('payment_status', '!=', PaymentStatusEnum::RETURNED);
 
+            // 2. Liter: HANYA hitung dari validTrans (Agar klop dengan Totalisator yang tidak jalan)
+            $systemLiter = $validTrans->sum(fn($t) => $t->items->sum('quantity_liter'));
+
+            // 3. Uang: Hitung dari validTrans juga
             $sysCash     = $validTrans->where('payment_method', PaymentMethodEnum::CASH)->sum(fn($t) => (float)$t->grand_total);
             $sysTransfer = $validTrans->where('payment_method', PaymentMethodEnum::TRANSFER)->sum(fn($t) => (float)$t->grand_total);
             $sysBon      = $validTrans->where('payment_method', PaymentMethodEnum::BON)->sum(fn($t) => (float)$t->grand_total);
             $sysTotal    = $sysCash + $sysTransfer + $sysBon;
 
             // --- C. SELISIH ---
-            // systemLiter (Gross) dikurang totalizerLiter
-            // Jika Return dihitung di systemLiter, maka selisihnya akan mendekati 0 (Match), meskipun uangnya 0.
             $diffLiter = $systemLiter - $totalizerLiter;
             $diffCash  = $physicalCash - $sysCash;
 
