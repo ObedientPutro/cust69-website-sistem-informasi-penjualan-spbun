@@ -6,8 +6,10 @@ use App\Enums\ShipTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
+use App\Http\Requests\Customer\UpdateDefaultLimitRequest;
 use App\Http\Requests\Customer\UpdateLimitRequest;
 use App\Models\Customer;
+use App\Models\SiteSetting;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,10 +32,13 @@ class CustomerController extends Controller
             sortDirection: $request->input('direction', 'desc')
         );
 
+        $defaultLimit = SiteSetting::first()->default_credit_limit ?? 0;
+
         return Inertia::render('Customer/Index', [
             'customers' => $customers,
             'filters'   => $request->only(['search', 'sort', 'direction']),
             'shipTypes' => ShipTypeEnum::toArray(),
+            'defaultLimit' => (float) $defaultLimit,
         ]);
     }
 
@@ -120,6 +125,19 @@ class CustomerController extends Controller
             return redirect()->back()->with('success', 'Limit Kredit berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal update limit: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update Default Limit Global (Route baru)
+     */
+    public function saveDefaultLimit(UpdateDefaultLimitRequest $request)
+    {
+        try {
+            $this->customerService->updateGlobalDefaultLimit($request->validated()['amount']);
+            return redirect()->back()->with('success', 'Default Limit Kredit berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal update: ' . $e->getMessage());
         }
     }
 }

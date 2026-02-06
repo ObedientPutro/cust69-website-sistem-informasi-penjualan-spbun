@@ -17,11 +17,13 @@ class SiteSetting extends Model
         'notification_email',
         'enable_email_notification',
         'enable_web_notification',
+        'default_credit_limit',
     ];
 
     protected $casts = [
         'enable_email_notification' => 'boolean',
         'enable_web_notification' => 'boolean',
+        'default_credit_limit' => 'float',
     ];
 
     protected $appends = ['logo_left_url', 'logo_right_url'];

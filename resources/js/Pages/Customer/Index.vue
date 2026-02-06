@@ -17,7 +17,8 @@ import CurrencyInput from "@/Components/FormElements/CurrencyInput.vue";
 const props = defineProps<{
     customers: any;
     filters: any;
-    shipTypes: { value: string, label: string }[]
+    shipTypes: { value: string, label: string }[],
+    defaultLimit: number;
 }>();
 const swal = useSweetAlert();
 const page = usePage();
@@ -28,6 +29,11 @@ const isOwner = computed(() => page.props.auth.user.role === 'owner');
 // --- STATE MODAL UTAMA (CRUD DATA) ---
 const isModalOpen = ref(false);
 const isEditMode = ref(false);
+
+const isDefaultLimitModalOpen = ref(false);
+const defaultLimitForm = useForm({
+    amount: props.defaultLimit
+});
 
 const form = useForm({
     id: null,
@@ -88,7 +94,7 @@ const columns = [
 const openCreate = () => {
     isEditMode.value = false;
     form.reset();
-    form.credit_limit = 0; // Default 0
+    form.credit_limit = props.defaultLimit;
     form.gross_tonnage = 0;
     form.pk_engine = 0;
     form.ship_type = 'fishing';
@@ -130,6 +136,18 @@ const submitLimit = () => {
             swal.toast('Limit Kredit Berhasil Diubah', 'success');
         },
         onError: () => swal.toast('Gagal mengubah limit', 'error')
+    });
+};
+
+const submitDefaultLimit = () => {
+    defaultLimitForm.put(route('customers.default-limit'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isDefaultLimitModalOpen.value = false;
+            swal.toast('Default Limit Berhasil Diatur', 'success');
+            if (!isEditMode.value) form.credit_limit = defaultLimitForm.amount;
+        },
+        onError: () => swal.toast('Gagal menyimpan pengaturan', 'error')
     });
 };
 
@@ -191,14 +209,32 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
 
         <DataTable :rows="customers.data" :columns="columns" :pagination="customers" :filters="filters">
             <template #actions>
-                <Button @click="openCreate" size="sm" variant="primary">
-                    <template #startIcon>
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                    </template>
-                    Tambah Nelayan
-                </Button>
+                <div class="flex gap-2">
+                    <Button @click="openCreate" size="sm" variant="primary">
+                        <template #startIcon>
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </template>
+                        Tambah Nelayan
+                    </Button>
+
+                    <Button
+                        v-if="isOwner"
+                        @click="isDefaultLimitModalOpen = true"
+                        size="sm"
+                        variant="outline"
+                        title="Atur Standar Limit Kredit untuk Pelanggan Baru"
+                    >
+                        <template #startIcon>
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </template>
+                        Default Limit
+                    </Button>
+                </div>
             </template>
 
             <template #cell-manager_name="{ row }">
@@ -378,6 +414,31 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                     <div class="flex justify-end gap-3 pt-2 border-t dark:border-gray-700">
                         <Button type="button" variant="outline" @click="isLimitModalOpen = false">Batal</Button>
                         <Button type="submit" variant="primary" :processing="limitForm.processing">Simpan Limit</Button>
+                    </div>
+                </form>
+            </div>
+        </Modal>
+
+        <Modal :show="isDefaultLimitModalOpen" title="Atur Default Limit Kredit" maxWidth="sm" @close="isDefaultLimitModalOpen = false">
+            <div class="p-1">
+                <p class="text-sm text-gray-500 mb-4">
+                    Nilai ini akan otomatis terisi pada kolom "Limit Kredit" setiap kali Anda menambahkan nelayan/pelanggan baru.
+                </p>
+
+                <form @submit.prevent="submitDefaultLimit">
+                    <div class="mb-6">
+                        <CurrencyInput
+                            v-model="defaultLimitForm.amount"
+                            label="Default Limit (Rp)"
+                            prefix="Rp"
+                            placeholder="0"
+                            class="text-lg font-bold"
+                        />
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2 border-t dark:border-gray-700">
+                        <Button type="button" variant="outline" @click="isDefaultLimitModalOpen = false">Batal</Button>
+                        <Button type="submit" variant="primary" :processing="defaultLimitForm.processing">Simpan Pengaturan</Button>
                     </div>
                 </form>
             </div>

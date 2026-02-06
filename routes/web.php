@@ -86,6 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
         Route::put('/customers/{customer}/limit', [CustomerController::class, 'updateLimit'])->name('customers.update-limit');
+        Route::put('/settings/customers/default-limit', [CustomerController::class, 'saveDefaultLimit'])->name('customers.default-limit');
 
         // --- MASTER DATA: PRODUCTS (BBM) ---
         Route::post('/products', [ProductController::class, 'store'])->name('products.save');

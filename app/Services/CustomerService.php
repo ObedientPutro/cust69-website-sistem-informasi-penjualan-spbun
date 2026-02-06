@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\SiteSetting;
 use App\Traits\NotificationHelper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -46,6 +47,7 @@ class CustomerService
 
     /**
      * Create Customer dengan Transaction
+     * @throws \Throwable
      */
     public function createCustomer(array $data): Customer
     {
@@ -53,6 +55,8 @@ class CustomerService
             if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
                 $data['photo'] = $data['photo']->store('customers/photos', 'public');
             }
+
+            $data['credit_limit'] = SiteSetting::first()->default_credit_limit;
 
             $customer = Customer::create($data);
 
@@ -69,6 +73,7 @@ class CustomerService
 
     /**
      * Update Customer dengan Transaction
+     * @throws \Throwable
      */
     public function updateCustomer(Customer $customer, array $data): Customer
     {
@@ -97,6 +102,7 @@ class CustomerService
 
     /**
      * Delete Customer dengan Pengecekan Relasi (Foreign Key)
+     * @throws \Throwable
      */
     public function deleteCustomer(Customer $customer): void
     {
@@ -149,5 +155,14 @@ class CustomerService
         $customer->update(['credit_limit' => $newLimit]);
 
         return $customer;
+    }
+
+    /**
+     * Update Global Default Credit Limit (Owner Only)
+     */
+    public function updateGlobalDefaultLimit(float $amount): void
+    {
+        $settings = SiteSetting::firstOrFail();
+        $settings->update(['default_credit_limit' => $amount]);
     }
 }
