@@ -15,6 +15,7 @@ import DatePicker from '@/Components/FormElements/DatePicker.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 import DecimalInput from "@/Components/FormElements/DecimalInput.vue";
+import IntegerInput from "@/Components/FormElements/IntegerInput.vue";
 
 const props = defineProps<{
     debts: any;
@@ -307,10 +308,10 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                     <div class="flex justify-between text-sm font-bold mb-2">
                         <span>{{ products.find(p => p.id == item.product_id)?.name || 'Produk' }}</span>
                     </div>
-                    <DecimalInput
+                    <IntegerInput
                         v-model="item.quantity_liter"
                         label="Volume (Liter)"
-                        placeholder="0.000"
+                        placeholder="0"
                         suffix="Liter"
                         required
                     />

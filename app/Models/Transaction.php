@@ -35,7 +35,7 @@ class Transaction extends Model
     protected $casts = [
         'transaction_date' => 'datetime',
         'paid_at' => 'datetime',
-        'grand_total' => 'decimal:2',
+        'grand_total' => 'float',
         'was_stock_minus' => 'boolean',
         'payment_method' => PaymentMethodEnum::class,
         'repayment_method' => PaymentMethodEnum::class,

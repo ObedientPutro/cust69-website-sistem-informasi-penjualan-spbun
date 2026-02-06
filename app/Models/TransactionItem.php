@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,11 +21,25 @@ class TransactionItem extends Model
     ];
 
     protected $casts = [
-        'quantity_liter' => 'decimal:2',
-        'price_per_liter' => 'decimal:2',
-        'cost_per_liter' => 'decimal:2',
-        'subtotal' => 'decimal:2',
+        'quantity_liter' => 'float',
+        'price_per_liter' => 'float',
+        'cost_per_liter' => 'float',
+        'subtotal' => 'float',
     ];
+
+    protected function subtotal(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => (int) round($value),
+        );
+    }
+
+    protected function pricePerLiter(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => (int) round($value),
+        );
+    }
 
     public function transaction(): BelongsTo
     {

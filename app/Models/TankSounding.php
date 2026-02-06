@@ -22,10 +22,10 @@ class TankSounding extends Model
 
     protected $casts = [
         'recorded_at' => 'datetime',
-        'physical_height_cm' => 'decimal:2',
-        'physical_liter' => 'decimal:2',
-        'system_liter_snapshot' => 'decimal:2',
-        'difference' => 'decimal:2',
+        'physical_height_cm' => 'float',
+        'physical_liter' => 'float',
+        'system_liter_snapshot' => 'float',
+        'difference' => 'float',
     ];
 
     public function user(): BelongsTo
