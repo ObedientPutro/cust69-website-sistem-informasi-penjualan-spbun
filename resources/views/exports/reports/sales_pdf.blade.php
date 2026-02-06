@@ -2,192 +2,293 @@
 
 @section('content')
     <style>
-        /* Styling khusus untuk area detail */
-        .detail-row td {
-            background-color: #f9fafb;
-            padding: 10px 20px !important;
-            border-top: none;
-            border-bottom: 2px solid #ddd;
+        /* --- RESET & BASE --- */
+        body { font-family: sans-serif; color: #333; font-size: 9pt; }
+
+        /* --- CONTAINER PER HARI --- */
+        .daily-wrapper {
+            width: 100%;
+            margin-bottom: 0;
+            page-break-inside: auto;
         }
-        .sub-title {
-            font-size: 8pt;
-            font-weight: bold;
-            color: #555;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 2px;
-            display: block;
-        }
-        .sub-table {
+
+        /* --- 1. TABEL RINGKASAN (HEADER) --- */
+        .summary-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 10px;
-            font-size: 8pt;
+            margin-bottom: 0;
+            border: 1px solid #9ca3af;
+        }
+
+        .summary-table th {
+            font-size: 8pt; font-weight: bold; text-transform: uppercase;
+            border: 1px solid #9ca3af; padding: 6px;
+            vertical-align: middle;
+        }
+
+        .summary-table td {
+            border-left: 1px solid #9ca3af;
+            border-right: 1px solid #9ca3af;
+            border-top: 1px solid #d1d5db;
+            border-bottom: none; /* Menyatu ke bawah */
+            padding: 8px 5px;
+            vertical-align: middle;
             background-color: #fff;
         }
-        .sub-table th {
-            background-color: #eee;
-            border: 1px solid #ddd;
-            padding: 4px;
-            text-align: left;
+
+        /* Warna Header */
+        .bg-header-date { background-color: #f3f4f6; }
+        .bg-header-vol  { background-color: #eff6ff; color: #1e40af; }
+        .bg-header-money{ background-color: #f0fdf4; color: #166534; }
+        .bg-header-phys { background-color: #fff7ed; color: #9a3412; }
+
+        /* --- 2. CONTAINER DETAIL --- */
+        .detail-container {
+            width: 100%;
+            box-sizing: border-box;
+
+            /* Border Menyatu dengan Summary */
+            border-left: 1px solid #9ca3af;
+            border-right: 1px solid #9ca3af;
+            border-bottom: 2px solid #9ca3af;
+            border-top: none;
+
+            background-color: #fcfcfc;
+
+            /* REVISI: Padding kiri kanan 0 agar tabel full width */
+            padding: 15px 0;
+
+            page-break-inside: auto;
         }
-        .sub-table td {
-            border: 1px solid #eee;
-            padding: 3px 4px;
-            color: #444;
-            background-color: #fff !important;
+
+        /* --- NESTED TABLES --- */
+        /* Judul Tabel Detail */
+        .nested-title {
+            font-size: 8pt; font-weight: bold; color: #555;
+            text-transform: uppercase; display: block;
+            /* Beri padding karena container tidak punya padding */
+            padding-left: 10px;
+            margin-bottom: 5px; margin-top: 15px;
         }
-        .empty-msg {
-            font-style: italic;
-            color: #888;
+        .nested-title:first-child { margin-top: 0; }
+
+        /* Tabel Detail */
+        .nested-table {
+            width: 100%; /* Full Width */
+            border-collapse: collapse;
+            background-color: #fff;
             font-size: 8pt;
-            padding: 5px;
+
+            /* Border atas bawah saja untuk pemisah */
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+
+            margin-bottom: 0;
+            page-break-inside: auto;
         }
+
+        .nested-table th {
+            background-color: #f9fafb; color: #4b5563; font-weight: bold;
+            padding: 6px 10px; /* Padding sel lebih lega */
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+
+        .nested-table tr { page-break-inside: auto; }
+
+        .nested-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            vertical-align: middle;
+        }
+
+        /* --- UTILITIES ALIGNMENT --- */
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+
+        .font-bold { font-weight: bold; }
+        .text-red { color: #dc2626; }
+        .text-green { color: #16a34a; }
+        .text-blue { color: #2563eb; }
+        .bg-audit { background-color: #fffbeb; color: #92400e; font-style: italic; border-bottom: 1px solid #fcd34d; }
+
+        .page-break { page-break-after: always; display: block; height: 0; clear: both; }
+
+        /* Total Table */
+        .total-table {
+            width: 100%; border-collapse: collapse; margin-top: 20px;
+            border: 2px solid #4b5563; background-color: #f3f4f6;
+        }
+        .total-table td { padding: 10px; font-weight: bold; font-size: 10pt; }
     </style>
 
-    <table class="data-table">
-        <thead>
-        <tr>
-            <th rowspan="2" width="10%">Tanggal</th>
-            <th colspan="3" class="center bg-in">Volume (Liter)</th>
-            <th colspan="4" class="center">Omset Sistem (Rupiah)</th>
-            <th colspan="2" class="center bg-out">Realisasi Fisik</th>
-        </tr>
-        <tr>
-            <th class="center bg-in" width="8%">Fisik</th>
-            <th class="center bg-in" width="8%">Sistem</th>
-            <th class="center bg-in" width="8%">Selisih</th>
-            <th class="right" width="10%">Cash</th>
-            <th class="right" width="10%">Trf</th>
-            <th class="right" width="10%">Bon</th>
-            <th class="right bold" width="12%">Total</th>
-            <th class="right bg-out" width="12%">Uang Laci</th>
-            <th class="center bg-out" width="12%">Beda Kas</th>
-        </tr>
-        </thead>
-        <tbody>
+    {{-- JUDUL LAPORAN --}}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin:0; text-transform: uppercase;">Laporan Detail Penjualan & Setoran</h2>
+        <p style="margin:5px 0; font-size: 9pt; color: #666;">
+            Periode: {{ \Carbon\Carbon::parse($start_date ?? date('Y-m-d'))->format('d/m/Y') }}
+            s/d {{ \Carbon\Carbon::parse($end_date ?? date('Y-m-d'))->format('d/m/Y') }}
+        </p>
+    </div>
+
+    @php
+        $grandOmset = 0;
+        $grandDiffLiter = 0;
+        $grandDiffCash = 0;
+    @endphp
+
+    @foreach($data as $row)
         @php
-            $grandOmset = 0;
-            $grandDiff = 0;
+            $grandOmset += $row['sys_total'];
+            $grandDiffLiter += $row['diff_liter'];
+            $grandDiffCash += $row['diff_cash'];
         @endphp
 
-        @foreach($data as $row)
-            @php
-                $grandOmset += $row['sys_total'];
-                $grandDiff += $row['diff_liter'];
-            @endphp
+        {{-- WRAPPER PER HARI --}}
+        <div class="daily-wrapper">
 
-            <tr style="background-color: #fff;">
-                <td><strong>{{ \Carbon\Carbon::parse($row['date'])->format('d/m/Y') }}</strong></td>
+            {{-- BAGIAN 1: TABEL RINGKASAN --}}
+            <table class="summary-table">
+                <thead>
+                <tr>
+                    <th rowspan="2" class="bg-header-date text-center" width="10%">Tanggal</th>
+                    <th colspan="3" class="bg-header-vol text-center">Volume (Liter)</th>
+                    <th colspan="4" class="bg-header-money text-center">Omset Sistem (Rupiah)</th>
+                    <th colspan="2" class="bg-header-phys text-center">Realisasi Fisik</th>
+                </tr>
+                <tr>
+                    <th class="bg-header-vol text-center" width="8%">Fisik</th>
+                    <th class="bg-header-vol text-center" width="8%">Sistem</th>
+                    <th class="bg-header-vol text-center" width="8%">Selisih</th>
+                    <th class="bg-header-money text-right" width="9%">Cash</th>
+                    <th class="bg-header-money text-right" width="9%">Trf</th>
+                    <th class="bg-header-money text-right" width="9%">Bon</th>
+                    <th class="bg-header-money text-right" width="11%">Total</th>
+                    <th class="bg-header-phys text-right" width="10%">Uang Laci</th>
+                    <th class="bg-header-phys text-center" width="10%">Beda Kas</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="text-center" style="background-color: #f9fafb;">
+                        <strong>{{ \Carbon\Carbon::parse($row['date'])->format('d/m/Y') }}</strong>
+                    </td>
+                    <td class="text-center">{{ number_format($row['phys_liter'], 0, ',', '.') }}</td>
+                    <td class="text-center font-bold">{{ number_format($row['sys_liter'], 0, ',', '.') }}</td>
+                    <td class="text-center font-bold {{ $row['diff_liter'] != 0 ? ($row['diff_liter'] > 0 ? 'text-blue' : 'text-red') : 'text-green' }}">
+                        {{ $row['diff_liter'] > 0 ? '+' : '' }}{{ number_format($row['diff_liter'], 2, ',', '.') }}
+                    </td>
+                    <td class="text-right">{{ number_format($row['sys_cash'], 0, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($row['sys_transfer'], 0, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($row['sys_bon'], 0, ',', '.') }}</td>
+                    <td class="text-right font-bold">{{ number_format($row['sys_total'], 0, ',', '.') }}</td>
+                    <td class="text-right font-bold">{{ number_format($row['phys_cash'], 0, ',', '.') }}</td>
+                    <td class="text-center font-bold {{ $row['diff_cash'] < 0 ? 'text-red' : 'text-green' }}">
+                        {{ number_format($row['diff_cash'], 0, ',', '.') }}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
 
-                <td class="center">{{ number_format($row['phys_liter'], 0, ',', '.') }}</td>
-                <td class="center bold">{{ number_format($row['sys_liter'], 0, ',', '.') }}</td>
-                <td class="center {{ $row['diff_liter'] > 5 ? 'text-red bold' : ($row['diff_liter'] < 0 ? 'text-yellow bold' : 'text-green') }}">
-                    {{ ($row['diff_liter'] > 0 ? '+' : '') . number_format($row['diff_liter'], 2, ',', '.') }}
-                </td>
+            {{-- BAGIAN 2: DETAIL CONTAINER --}}
+            <div class="detail-container">
 
-                <td class="right" style="font-size: 8pt; color: #666;">{{ number_format($row['sys_cash'], 0, ',', '.') }}</td>
-                <td class="right" style="font-size: 8pt; color: #666;">{{ number_format($row['sys_transfer'], 0, ',', '.') }}</td>
-                <td class="right" style="font-size: 8pt; color: #666;">{{ number_format($row['sys_bon'], 0, ',', '.') }}</td>
-                <td class="right bold">{{ number_format($row['sys_total'], 0, ',', '.') }}</td> <td class="right bold">{{ number_format($row['phys_cash'], 0, ',', '.') }}</td>
-                <td class="center {{ $row['diff_cash'] < 0 ? 'text-red bold' : 'text-green' }}">
-                    {{ number_format($row['diff_cash'], 0, ',', '.') }}
-                </td>
-            </tr>
-
-            <tr class="detail-row">
-                <td colspan="10">
-
-                    <div style="margin-bottom: 10px;">
-                        <span class="sub-title">Detail Shift (Fisik Mesin)</span>
-                        @if(count($row['shifts']) > 0)
-                            <table class="sub-table">
-                                <thead>
-                                <tr>
-                                    <th width="25%">Produk</th>
-                                    <th class="right" width="15%">Awal</th>
-                                    <th class="right" width="15%">Akhir</th>
-                                    <th class="right" width="15%">Terjual (L)</th>
-                                    <th class="right">Uang Laci (Rp)</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @foreach($row['shifts'] as $s)
-                                    <tr>
-                                        <td>{{ $s->product->name ?? '-' }}</td>
-                                        <td class="right">{{ number_format($s->opening_totalizer, 1, ',', '.') }}</td>
-                                        <td class="right">{{ number_format($s->closing_totalizer, 1, ',', '.') }}</td>
-                                        <td class="right bold">{{ number_format($s->total_sales_liter, 2, ',', '.') }}</td>
-                                        <td class="right">{{ number_format($s->cash_collected, 0, ',', '.') }}</td>
-                                    </tr>
-                                    {{-- REVISI: Tampilkan Catatan Audit di PDF --}}
-                                    @if($s->is_audited && !empty($s->owner_note))
-                                        <tr>
-                                            <td colspan="5" style="background-color: #fff3cd; border-bottom: 1px solid #ffeeba; padding: 4px 8px; color: #856404; font-size: 7pt; font-style: italic;">
-                                                <strong>[AUDIT OWNER]:</strong> {{ $s->owner_note }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                                </tbody>
-                            </table>
-                        @else
-                            <div class="empty-msg">- Tidak ada data shift -</div>
+                {{-- DETAIL SHIFT --}}
+                <span class="nested-title">Detail Shift (Fisik Mesin)</span>
+                <table class="nested-table">
+                    <thead>
+                    <tr>
+                        <th width="25%" class="text-left">Produk</th>
+                        <th width="20%" class="text-right">Meter Awal</th>
+                        <th width="20%" class="text-right">Meter Akhir</th>
+                        <th width="15%" class="text-right">Terjual (L)</th>
+                        <th width="20%" class="text-right">Uang Laci</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($row['shifts'] as $s)
+                        <tr>
+                            <td class="text-left">{{ $s->product->name ?? '-' }}</td>
+                            <td class="text-right">{{ number_format($s->opening_totalizer, 1, ',', '.') }}</td>
+                            <td class="text-right">{{ number_format($s->closing_totalizer, 1, ',', '.') }}</td>
+                            <td class="text-right font-bold">{{ number_format($s->total_sales_liter, 2, ',', '.') }}</td>
+                            <td class="text-right">{{ number_format($s->cash_collected, 0, ',', '.') }}</td>
+                        </tr>
+                        @if($s->is_audited && $s->owner_note)
+                            <tr>
+                                <td colspan="5" class="bg-audit text-left">
+                                    <strong>[AUDIT OWNER]:</strong> {{ $s->owner_note }}
+                                </td>
+                            </tr>
                         @endif
-                    </div>
+                    @empty
+                        <tr><td colspan="5" class="text-center" style="font-style:italic; color:#999;">Tidak ada data shift</td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
 
-                    <div>
-                        <span class="sub-title">Detail Transaksi (Sistem)</span>
-                        @if(count($row['transactions']) > 0)
-                            <table class="sub-table">
-                                <thead>
-                                <tr>
-                                    <th width="10%">Jam</th>
-                                    <th width="15%">No. Nota</th>
-                                    <th width="20%">Pelanggan</th>
-                                    <th width="30%">Produk</th>
-                                    <th width="10%">Metode</th>
-                                    <th class="right">Total (Rp)</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @foreach($row['transactions'] as $t)
-                                    <tr>
-                                        <td>{{ $t->transaction_date->format('H:i') }}</td>
-                                        <td>#{{ $t->id }}</td>
-                                        <td>{{ $t->customer->name ?? 'Umum' }}</td>
-                                        <td>
-                                            @foreach($t->items as $item)
-                                                {{ $item->product->name }} ({{ $item->quantity_liter }}L)<br>
-                                            @endforeach
-                                        </td>
-                                        <td>{{ ucfirst($t->payment_method->value) }}</td>
-                                        <td class="right">{{ number_format($t->grand_total, 0, ',', '.') }}</td>
-                                    </tr>
+                {{-- DETAIL TRANSAKSI --}}
+                <span class="nested-title">Detail Transaksi (Sistem)</span>
+                <table class="nested-table">
+                    <thead>
+                    <tr>
+                        <th width="10%" class="text-center">Jam</th>
+                        <th width="25%" class="text-left">Pelanggan</th>
+                        <th width="35%" class="text-left">Produk</th>
+                        <th width="10%" class="text-center">Metode</th>
+                        <th width="20%" class="text-right">Total (Rp)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($row['transactions'] as $t)
+                        <tr>
+                            <td class="text-center">{{ $t->transaction_date->format('H:i') }}</td>
+                            <td class="text-left">
+                                <strong>{{ $t->customer->ship_name ?? 'Umum' }}</strong>
+                                @if(isset($t->customer->owner_name))
+                                    <br><span style="font-size: 7pt; color: #666;">{{ $t->customer->owner_name }}</span>
+                                @endif
+                            </td>
+                            <td class="text-left">
+                                @foreach($t->items as $item)
+                                    <div>{{ $item->product->name }} ({{ number_format($item->quantity_liter, 0) }}L)</div>
                                 @endforeach
-                                </tbody>
-                            </table>
-                        @else
-                            <div class="empty-msg">- Tidak ada transaksi sistem -</div>
-                        @endif
-                    </div>
+                            </td>
+                            <td class="text-center" style="text-transform:uppercase; font-size:7pt; font-weight:bold;">
+                                {{ $t->payment_method->value }}
+                            </td>
+                            <td class="text-right">{{ number_format($t->grand_total, 0, ',', '.') }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="text-center" style="font-style:italic; color:#999;">Tidak ada transaksi sistem</td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
 
-                </td>
-            </tr>
-        @endforeach
-        </tbody>
-        <tfoot>
-        <tr class="total-row">
-            <td colspan="3" class="right">TOTAL PERIODE</td>
-            <td class="center {{ $grandDiff < -5 ? 'text-red' : '' }}">
-                {{ number_format($grandDiff, 2, ',', '.') }} L
+            </div> {{-- End Detail Container --}}
+
+        </div> {{-- End Daily Wrapper --}}
+
+        {{-- PAGE BREAK --}}
+        @if(!$loop->last)
+            <div class="page-break"></div>
+        @endif
+
+    @endforeach
+
+    {{-- GRAND TOTAL --}}
+    <table class="total-table">
+        <tr>
+            <td width="30%" class="text-right">TOTAL PERIODE INI</td>
+            <td width="20%" class="text-center {{ $grandDiffLiter != 0 ? 'text-red' : 'text-green' }}">
+                Selisih Volume: {{ number_format($grandDiffLiter, 2, ',', '.') }} L
             </td>
-            <td colspan="3"></td>
-            <td class="right">Rp {{ number_format($grandOmset, 0, ',', '.') }}</td>
-            <td colspan="2"></td>
+            <td width="50%" class="text-right">
+                Total Omset: Rp {{ number_format($grandOmset, 0, ',', '.') }}
+            </td>
         </tr>
-        </tfoot>
     </table>
 
     <div style="margin-top: 20px; font-size: 8pt; color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px;">

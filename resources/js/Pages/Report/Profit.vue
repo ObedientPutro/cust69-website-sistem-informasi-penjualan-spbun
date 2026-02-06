@@ -47,7 +47,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
     <Head title="Laporan Laba Rugi" />
     <AdminLayout>
 
-        <div class="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
+        <div class="mb-6 flex flex-col xl:flex-row justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Laporan Laba Rugi (Gross Profit)</h2>
                 <p class="text-sm text-gray-500">Analisis keuntungan kotor berdasarkan selisih Harga Jual dan HPP.</p>
@@ -78,7 +78,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2- xl:grid-cols-3 gap-6 mb-6">
             <MetricCard title="Total Omset" :value="formatRupiah(totals.omzet)" color="primary" :icon="PieChartIcon" />
             <MetricCard title="Total HPP (Modal)" :value="formatRupiah(totals.hpp)" color="warning" :icon="BarChartIcon" />
             <MetricCard title="Laba Kotor" :value="formatRupiah(totals.profit)" color="success" :icon="InfoCircleIcon" />

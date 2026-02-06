@@ -17,6 +17,7 @@ class ShiftService
 {
     /**
      * Membuka Shift Baru (Pagi/Awal)
+     * @throws \Throwable
      */
     public function openShift(array $data): PumpShift
     {
@@ -59,6 +60,7 @@ class ShiftService
 
     /**
      * Menutup Shift & Melakukan Snapshot Data Sistem
+     * @throws \Throwable
      */
     public function closeShift(PumpShift $shift, array $data): PumpShift
     {
@@ -73,24 +75,14 @@ class ShiftService
             $literSoldPhysical = $data['closing_totalizer'] - $shift->opening_totalizer;
 
             // 2. Hitung Sistem (Transaksi Valid Saja)
-            // Asumsi: Transaksi memiliki pump_shift_id, atau berdasarkan range waktu
-            $systemSummary = Transaction::query()
-                ->where(function ($query) use ($shift) {
-                    // Kelompokkan logika pencarian (ID Shift ATAU Range Waktu)
-                    $query->where('pump_shift_id', $shift->id)
-                        ->orWhere(function($q) use ($shift) {
-                            $q->whereBetween('transaction_date', [$shift->opened_at, Carbon::now()])
-                                ->whereHas('items', fn($i) => $i->where('product_id', $shift->product_id));
-                        });
-                })
-                // Filter Wajib: Status BUKAN returned/void
-                ->where('payment_status', '!=', PaymentStatusEnum::RETURNED->value)
+            $validTransactions = Transaction::forShift($shift)
+                ->valid()
                 ->with('items')
                 ->get();
 
             // Hitung total liter dari transaksi sistem
-            $literSoldSystem = $systemSummary->sum(fn($t) => $t->items->where('product_id', $shift->product_id)->sum('quantity_liter'));
-            $amountSystem = $systemSummary->sum('grand_total');
+            $literSoldSystem = $validTransactions->sum(fn($t) => $t->items->where('product_id', $shift->product_id)->sum('quantity_liter'));
+            $amountSystem = $validTransactions->sum('grand_total');
 
             $proofPath = null;
             if (isset($data['closing_proof']) && $data['closing_proof'] instanceof UploadedFile) {

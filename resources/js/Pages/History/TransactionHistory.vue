@@ -160,7 +160,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
     <Head title="Mutasi Transaksi" />
     <AdminLayout>
 
-        <div class="mb-6 flex flex-col xl:flex-row justify-between items-end gap-4">
+        <div class="mb-6 flex flex-col xl:flex-row justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Mutasi Transaksi</h2>
                 <p class="text-sm text-gray-500">Rekapitulasi data penjualan, edit, dan return.</p>
@@ -168,6 +168,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
 
             <div class="flex flex-wrap items-center gap-2">
                 <div class="w-32"><DatePicker v-model="filterForm.start_date" placeholder="Mulai" /></div>
+                <span class="text-gray-400">-</span>
                 <div class="w-32"><DatePicker v-model="filterForm.end_date" placeholder="Sampai" /></div>
 
                 <div class="w-40">
@@ -196,7 +197,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
             <MetricCard title="Omset Bersih (Valid)" :value="formatRupiah(summary.total_omset)" color="success">
                 <template #icon>
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>

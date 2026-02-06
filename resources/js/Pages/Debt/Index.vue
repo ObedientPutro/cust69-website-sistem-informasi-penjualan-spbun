@@ -140,7 +140,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
     <Head title="Manajemen Piutang" />
     <AdminLayout>
 
-        <div class="mb-6 flex flex-col xl:flex-row justify-between items-end gap-4">
+        <div class="mb-6 flex flex-col xl:flex-row justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Manajemen Piutang (Bon)</h2>
                 <p class="text-sm text-gray-500">Monitoring dan pelunasan transaksi piutang pelanggan.</p>
@@ -148,6 +148,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
 
             <div class="flex flex-wrap items-center gap-2">
                 <div class="w-32"><DatePicker v-model="filterForm.start_date" placeholder="Mulai" /></div>
+                <span class="text-gray-400">-</span>
                 <div class="w-32"><DatePicker v-model="filterForm.end_date" placeholder="Sampai" /></div>
 
                 <div class="w-40">

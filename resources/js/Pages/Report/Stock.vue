@@ -51,7 +51,6 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
 <template>
     <Head title="Laporan Arus Stok" />
     <AdminLayout>
-
         <div class="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Laporan Arus Stok (Stock Flow)</h2>
@@ -118,6 +117,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                         <th class="px-6 py-4">Waktu</th>
                         <th class="px-6 py-4">Tipe Mutasi</th>
                         <th class="px-6 py-4">Produk</th>
+                        <th class="px-6 py-4">Pelanggan</th>
                         <th class="px-6 py-4">Referensi</th>
                         <th class="px-6 py-4 text-center text-green-600 bg-green-50 dark:bg-green-900/10">Masuk</th>
                         <th class="px-6 py-4 text-center text-orange-600 bg-orange-50 dark:bg-orange-900/10">Keluar</th>
@@ -139,6 +139,9 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                         <td class="px-6 py-4 font-bold text-gray-800 dark:text-white">
                             {{ row.product_name }}
                         </td>
+                        <td class="px-6 py-4">
+                            {{ row.customer_name }}
+                        </td>
                         <td class="px-6 py-4 font-mono text-xs text-gray-500">
                             {{ row.ref }}
                         </td>
@@ -159,7 +162,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                     </tbody>
                     <tfoot v-if="data.length > 0" class="bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700 font-bold">
                     <tr>
-                        <td colspan="4" class="px-6 py-4 text-right">TOTAL VOLUME</td>
+                        <td colspan="5" class="px-6 py-4 text-right">TOTAL VOLUME</td>
                         <td class="px-6 py-4 text-center text-green-600 bg-green-50 dark:bg-green-900/20">{{ summary.in }}</td>
                         <td class="px-6 py-4 text-center text-orange-600 bg-orange-50 dark:bg-orange-900/20">{{ summary.out }}</td>
                     </tr>
