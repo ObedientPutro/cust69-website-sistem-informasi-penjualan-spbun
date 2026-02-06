@@ -54,7 +54,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
     <Head title="Rekonsiliasi Penjualan" />
     <AdminLayout>
 
-        <div class="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
+        <div class="mb-6 flex flex-col xl:flex-row justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Laporan Penjualan Lengkap</h2>
                 <p class="text-sm text-gray-500">Rekonsiliasi Liter (Fisik vs Sistem) & Setoran Uang.</p>
@@ -62,6 +62,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
 
             <div class="flex flex-wrap items-center gap-2">
                 <div class="w-32"><DatePicker v-model="form.start_date" /></div>
+                <span class="text-gray-400">-</span>
                 <div class="w-32"><DatePicker v-model="form.end_date" /></div>
                 <div class="w-48">
                     <SelectInput
@@ -80,7 +81,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             <MetricCard title="Total Omset Sistem" :value="formatRupiah(summary.omset)" color="success" :icon="DocsIcon" />
             <MetricCard title="Uang Fisik (Laci)" :value="formatRupiah(summary.phys_cash)" color="primary" :icon="PlugInIcon" />
             <MetricCard title="Total Volume (Sistem)" :value="summary.sys_liter.toLocaleString() + ' L'" color="warning" :icon="BoxCubeIcon" />
@@ -190,7 +191,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                                     <tbody>
                                     <tr v-for="t in day.transactions" :key="t.id" class="border-b dark:border-gray-700">
                                         <td class="px-3 py-2">{{ new Date(t.transaction_date).toLocaleTimeString('id-ID') }}</td>
-                                        <td class="px-3 py-2">{{ t.customer?.name || 'Umum' }}</td>
+                                        <td class="px-3 py-2">{{ t.customer?.ship_name || 'Umum' }}</td>
                                         <td class="px-3 py-2 uppercase text-xs font-bold">{{ t.payment_method }}</td>
                                         <td class="px-3 py-2 text-right">{{ formatRupiah(t.grand_total) }}</td>
                                     </tr>

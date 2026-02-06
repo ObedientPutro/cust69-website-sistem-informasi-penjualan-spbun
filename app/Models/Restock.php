@@ -22,9 +22,9 @@ class Restock extends Model
 
     protected $casts = [
         'date' => 'date',
-        'volume_liter' => 'decimal:2',
-        'total_cost' => 'decimal:2',
-        'unit_cost' => 'decimal:2',
+        'volume_liter' => 'float',
+        'total_cost' => 'float',
+        'unit_cost' => 'float',
     ];
 
     public function user(): BelongsTo

@@ -5,13 +5,13 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Button from '@/Components/Ui/Button.vue';
 import TextInput from '@/Components/FormElements/TextInput.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
-import DecimalInput from '@/Components/FormElements/DecimalInput.vue';
 import SearchableSelect from '@/Components/FormElements/SearchableSelect.vue';
 import TextArea from '@/Components/FormElements/TextArea.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import Modal from '@/Components/Ui/Modal.vue';
 import Alert from '@/Components/Ui/Alert.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
+import IntegerInput from "@/Components/FormElements/IntegerInput.vue";
 
 const props = defineProps<{
     products: any[];
@@ -35,7 +35,7 @@ const form = useForm({
     payment_method: 'cash',
     payment_proof: null as File | null,
     note: '',
-    items: [{ product_id: '', quantity_liter: '0.000', price: 0 }]
+    items: [{ product_id: '', quantity_liter: '0', price: 0 }]
 });
 
 // ... (Logic customerOptions, activeShifts, isShiftOpen, dll tetap sama) ...
@@ -264,10 +264,10 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                                 </option>
                             </SelectInput>
                         </div>
-                        <DecimalInput
+                        <IntegerInput
                             v-model="form.items[0].quantity_liter"
-                            label="Volume Pembelian"
-                            placeholder="0.000"
+                            label="Volume (Liter)"
+                            placeholder="0"
                             suffix="Liter"
                             required
                             :error="form.errors['items.0.quantity_liter']"

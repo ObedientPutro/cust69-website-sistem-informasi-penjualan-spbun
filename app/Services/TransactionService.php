@@ -13,12 +13,16 @@ use App\Models\TransactionItem;
 use App\Traits\NotificationHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class TransactionService
 {
+    /**
+     * @throws \Throwable
+     */
     public function createTransaction(array $data, $fileProof = null): Transaction
     {
         return DB::transaction(function () use ($data, $fileProof) {
@@ -134,7 +138,7 @@ class TransactionService
 
     /**
      * UPDATE TRANSAKSI (HANYA OWNER)
-     * Logic: Rollback stok lama -> Hitung ulang -> Potong stok baru -> Update Data
+     * @throws \Throwable
      */
     public function updateTransaction(Transaction $transaction, array $data): Transaction
     {
@@ -190,7 +194,7 @@ class TransactionService
 
     /**
      * Return Transaksi (Void)
-     * Logic: Stok dikembalikan, Status jadi 'RETURNED', Grand Total dianggap 0 di laporan
+     * @throws \Throwable
      */
     public function returnTransaction(Transaction $transaction, string $reason): Transaction
     {
@@ -229,9 +233,35 @@ class TransactionService
     }
 
     /**
+     * Helper: Sinkronisasi Total Shift
+     */
+    private function syncShiftSnapshot($shiftId): void
+    {
+        $shift = PumpShift::find($shiftId);
+
+        if ($shift) {
+            $validTransactions = Transaction::forShift($shift)
+                ->valid()
+                ->with('items')
+                ->get();
+
+            $totalLiter = $validTransactions->sum(function ($trx) use ($shift) {
+                return $trx->items->where('product_id', $shift->product_id)->sum('quantity_liter');
+            });
+
+            $totalAmount = $validTransactions->sum('grand_total');
+
+            $shift->update([
+                'system_transaction_liter' => $totalLiter,
+                'system_transaction_amount' => $totalAmount,
+            ]);
+        }
+    }
+
+    /**
      * Get Transaction History dengan Filter Lengkap
      */
-    public function getHistory(array $filters, int $perPage = 15)
+    public function getHistory(array $filters, int $perPage = 15): Builder
     {
         $query = Transaction::with(['user', 'customer', 'items.product']);
 

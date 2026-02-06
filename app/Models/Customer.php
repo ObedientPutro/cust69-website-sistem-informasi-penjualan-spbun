@@ -29,9 +29,9 @@ class Customer extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'credit_limit' => 'decimal:2',
-        'gross_tonnage' => 'decimal:2',
-        'pk_engine' => 'decimal:2',
+        'credit_limit' => 'float',
+        'gross_tonnage' => 'float',
+        'pk_engine' => 'float',
         'ship_type' => ShipTypeEnum::class,
     ];
 

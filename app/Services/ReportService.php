@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 class ReportService
 {
     /**
-     * 1. Laporan Penjualan Harian (Rekonsiliasi Totalisator vs Sistem)
+     * Laporan Penjualan Harian (Rekonsiliasi Totalisator vs Sistem)
      */
     public function getDailySalesReport(string $start, string $end, ?string $productId = null)
     {
@@ -30,10 +30,8 @@ class ReportService
             });
 
         // 2. Ambil Data Transaksi (Sistem)
-        // REVISI: KITA AMBIL SEMUA (TERMASUK RETURNED) untuk keperluan pencocokan Liter
         $transactions = Transaction::with(['items.product', 'user', 'customer'])
             ->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
-            // HAPUS filter exclude 'returned' disini agar liter return tetap terambil
             ->when($productId, function($q) use ($productId) {
                 $q->whereHas('items', fn($i) => $i->where('product_id', $productId));
             })
@@ -61,20 +59,19 @@ class ReportService
 
             // --- B. ANALISA SISTEM ---
 
-            // 1. Liter: Hitung SEMUA (termasuk Return) agar match dengan Totalisator
-            $systemLiter = $dayTrans->sum(fn($t) => $t->items->sum('quantity_liter'));
-
-            // 2. Uang: HANYA hitung yang VALID (Bukan Return)
+            // 1. Filter Transaksi Valid DULU (Buang yang Returned)
             $validTrans = $dayTrans->where('payment_status', '!=', PaymentStatusEnum::RETURNED);
 
+            // 2. Liter: HANYA hitung dari validTrans (Agar klop dengan Totalisator yang tidak jalan)
+            $systemLiter = $validTrans->sum(fn($t) => $t->items->sum('quantity_liter'));
+
+            // 3. Uang: Hitung dari validTrans juga
             $sysCash     = $validTrans->where('payment_method', PaymentMethodEnum::CASH)->sum(fn($t) => (float)$t->grand_total);
             $sysTransfer = $validTrans->where('payment_method', PaymentMethodEnum::TRANSFER)->sum(fn($t) => (float)$t->grand_total);
             $sysBon      = $validTrans->where('payment_method', PaymentMethodEnum::BON)->sum(fn($t) => (float)$t->grand_total);
             $sysTotal    = $sysCash + $sysTransfer + $sysBon;
 
             // --- C. SELISIH ---
-            // systemLiter (Gross) dikurang totalizerLiter
-            // Jika Return dihitung di systemLiter, maka selisihnya akan mendekati 0 (Match), meskipun uangnya 0.
             $diffLiter = $systemLiter - $totalizerLiter;
             $diffCash  = $physicalCash - $sysCash;
 
@@ -98,54 +95,68 @@ class ReportService
     }
 
     /**
-     * 2. Laporan Arus Stok (Masuk vs Keluar)
+     * Laporan Arus Stok (Masuk vs Keluar)
      */
-    public function getStockFlowReport(string $start, string $end, ?string $productId = null)
+    public function getStockFlowReport(string $start, string $end, ?string $productId = null): \Illuminate\Support\Collection
     {
         $inflow = Restock::with('product')
             ->whereBetween('date', [$start, $end])
             ->when($productId, fn($q) => $q->where('product_id', $productId))
             ->get()
+            ->toBase()
             ->map(function ($item) {
                 return [
+                    'sort_date' => Carbon::parse($item->date)->startOfDay(),
                     'date' => $item->date,
                     'type' => 'Restock (DO)',
                     'product_name' => $item->product->name,
-                    'qty_in' => $item->volume_liter,
+                    'customer_name' => '-',
+                    'qty_in' => (float) $item->volume_liter,
                     'qty_out' => 0,
                     'ref' => $item->note ?? '-',
                 ];
             });
 
-        $outflow = TransactionItem::with(['transaction', 'product'])
+        $outflow = TransactionItem::with(['transaction.customer', 'product'])
             ->whereHas('transaction', function ($q) use ($start, $end) {
-                $q->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
-                    ->where('payment_status', '!=', PaymentStatusEnum::RETURNED->value); // Tetap Exclude
+                $q->valid()->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
             })
             ->when($productId, fn($q) => $q->where('product_id', $productId))
             ->get()
+            ->toBase()
             ->map(function ($item) {
+                $trx = $item->transaction;
+                $custName = 'Umum';
+
+                if ($trx->customer) {
+                    $custName = $trx->customer->ship_name ?? $trx->customer->owner_name;
+                }
+
                 return [
-                    'date' => $item->transaction->transaction_date,
+                    'sort_date' => $trx->transaction_date,
+                    'date' => $trx->transaction_date->format('Y-m-d H:i'),
                     'type' => 'Penjualan',
                     'product_name' => $item->product->name,
+                    'customer_name' => $custName,
                     'qty_in' => 0,
-                    'qty_out' => $item->quantity_liter,
-                    'ref' => $item->transaction->trx_code,
+                    'qty_out' => (float) $item->quantity_liter,
+                    'ref' => $trx->trx_code,
                 ];
             });
 
-        return $inflow->merge($outflow)->sortByDesc('date')->values();
+        $inflowBase = $inflow->toBase();
+        $outflowBase = $outflow->toBase();
+
+        return $inflowBase->merge($outflowBase)->sortByDesc('sort_date')->values();
     }
 
     /**
-     * 3. Laporan Laba Rugi
+     * Laporan Laba Rugi
      */
-    public function getProfitLossReport(string $start, string $end, ?string $productId = null)
+    public function getProfitLossReport(string $start, string $end, ?string $productId = null): \Illuminate\Support\Collection
     {
         $query = TransactionItem::whereHas('transaction', function ($q) use ($start, $end) {
-            $q->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
-                ->where('payment_status', '!=', PaymentStatusEnum::RETURNED->value); // Tetap Exclude
+            $q->valid()->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
         });
 
         if ($productId) {

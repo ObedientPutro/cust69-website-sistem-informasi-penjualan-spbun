@@ -15,6 +15,7 @@ import DatePicker from '@/Components/FormElements/DatePicker.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
 import DecimalInput from "@/Components/FormElements/DecimalInput.vue";
+import IntegerInput from "@/Components/FormElements/IntegerInput.vue";
 
 const props = defineProps<{
     debts: any;
@@ -140,7 +141,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
     <Head title="Manajemen Piutang" />
     <AdminLayout>
 
-        <div class="mb-6 flex flex-col xl:flex-row justify-between items-end gap-4">
+        <div class="mb-6 flex flex-col xl:flex-row justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Manajemen Piutang (Bon)</h2>
                 <p class="text-sm text-gray-500">Monitoring dan pelunasan transaksi piutang pelanggan.</p>
@@ -148,6 +149,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
 
             <div class="flex flex-wrap items-center gap-2">
                 <div class="w-32"><DatePicker v-model="filterForm.start_date" placeholder="Mulai" /></div>
+                <span class="text-gray-400">-</span>
                 <div class="w-32"><DatePicker v-model="filterForm.end_date" placeholder="Sampai" /></div>
 
                 <div class="w-40">
@@ -306,10 +308,10 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                     <div class="flex justify-between text-sm font-bold mb-2">
                         <span>{{ products.find(p => p.id == item.product_id)?.name || 'Produk' }}</span>
                     </div>
-                    <DecimalInput
+                    <IntegerInput
                         v-model="item.quantity_liter"
                         label="Volume (Liter)"
-                        placeholder="0.000"
+                        placeholder="0"
                         suffix="Liter"
                         required
                     />

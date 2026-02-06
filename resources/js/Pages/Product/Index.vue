@@ -13,6 +13,8 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import DecimalInput from "@/Components/FormElements/DecimalInput.vue";
+import CurrencyInput from "@/Components/FormElements/CurrencyInput.vue";
+import IntegerInput from "@/Components/FormElements/IntegerInput.vue";
 
 const props = defineProps<{
     products: any;
@@ -90,8 +92,8 @@ const openEditModal = (product: any) => {
     form.id = product.id;
     form.name = product.name;
     form.unit = product.unit;
-    form.price = parseFloat(product.price);
-    form.cost_price = parseFloat(product.cost_price);
+    form.price = product.price;
+    form.cost_price = product.cost_price;
     isCreateModalOpen.value = true;
 };
 
@@ -428,20 +430,20 @@ const toggleStatus = (product: any) => {
                         </h4>
                     </div>
                     <div>
-                        <TextInput
+                        <CurrencyInput
                             v-model="form.cost_price"
-                            type="number"
                             label="HPP (Modal)"
+                            prefix="Rp"
                             :error="form.errors.cost_price"
                         />
                     </div>
                     <div>
-                        <TextInput
+                        <CurrencyInput
                             v-model="form.price"
-                            type="number"
                             label="Harga Jual"
-                            :error="form.errors.price"
+                            prefix="Rp"
                             required
+                            :error="form.errors.price"
                         />
                     </div>
                 </div>
@@ -502,19 +504,18 @@ const toggleStatus = (product: any) => {
                 />
 
                 <div class="grid grid-cols-2 gap-4">
-                    <DecimalInput
+                    <IntegerInput
                         v-model="formRestock.volume_liter"
                         label="Volume (Liter)"
-                        placeholder="0.00"
-                        suffix="Liter"
-                        :error="formRestock.errors.volume_liter"
-                        required
-                    />
-                    <TextInput
-                        v-model="formRestock.total_cost"
-                        type="number"
-                        label="Total Bayar (Rp)"
                         placeholder="0"
+                        suffix="Liter"
+                        required
+                        :error="formRestock.errors.volume_liter"
+                    />
+                    <CurrencyInput
+                        v-model="formRestock.total_cost"
+                        label="Total Bayar (Rp)"
+                        prefix="Rp"
                         required
                         :error="formRestock.errors.total_cost"
                     />
@@ -598,13 +599,13 @@ const toggleStatus = (product: any) => {
                         label="Tinggi (CM)"
                         placeholder="Opsional"
                     />
-                    <DecimalInput
+                    <IntegerInput
                         v-model="formSounding.physical_liter"
                         label="Volume Fisik (Liter)"
-                        placeholder="0.00"
+                        placeholder="0"
                         suffix="Liter"
-                        :error="formRestock.errors.volume_liter"
                         required
+                        :error="formSounding.errors.physical_liter"
                     />
                 </div>
 

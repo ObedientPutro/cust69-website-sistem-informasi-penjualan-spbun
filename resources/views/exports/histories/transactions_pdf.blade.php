@@ -4,25 +4,28 @@
     <table class="data-table">
         <thead>
         <tr>
-            <th width="12%">Waktu</th>
-            <th width="15%">Kode Transaksi</th> <th width="18%">Pelanggan</th>
-            <th>Detail Produk</th>
-            <th class="right" width="12%">Total (Rp)</th>
-            <th class="center" width="8%">Metode</th>
-            <th class="center" width="10%">Status</th>
-            <th width="10%">Kasir</th>
+            <th style="text-align: center" width="2%">No.</th>
+            <th style="text-align: center" width="12%">Waktu</th>
+            <th style="text-align: center" width="15%">Kode Transaksi</th>
+            <th style="text-align: center" width="18%">Pelanggan</th>
+            <th style="text-align: center">Detail Produk</th>
+            <th style="text-align: center" width="12%">Total (Rp)</th>
+            <th style="text-align: center" width="8%">Metode</th>
+            <th style="text-align: center" width="10%">Status</th>
+            <th style="text-align: center" width="10%">Kasir</th>
         </tr>
         </thead>
         <tbody>
         @foreach($transactions as $trx)
             <tr>
-                <td>{{ $trx->transaction_date->format('d/m/Y H:i') }}</td>
+                <td style="text-align: center">{{ $loop->iteration }}</td>
+                <td style="text-align: center">{{ $trx->transaction_date->format('d/m/Y H:i') }}</td>
 
-                <td style="font-family: monospace; font-size: 9pt;">
+                <td style="font-family: monospace; font-size: 9pt; text-align: center">
                     {{ $trx->trx_code }}
                 </td>
 
-                <td>{{ $trx->customer ? $trx->customer->name : 'Umum' }}</td>
+                <td>{{ $trx->customer ? $trx->customer->ship_name : 'Umum' }}</td>
 
                 <td>
                     @foreach($trx->items as $item)
@@ -30,11 +33,11 @@
                     @endforeach
                 </td>
 
-                <td class="right">{{ number_format($trx->grand_total, 0, ',', '.') }}</td>
+                <td style="text-align: center">{{ number_format($trx->grand_total, 0, ',', '.') }}</td>
 
-                <td class="center">{{ ucfirst($trx->payment_method->value) }}</td>
+                <td style="text-align: center">{{ ucfirst($trx->payment_method->value) }}</td>
 
-                <td class="center">
+                <td style="text-align: center">
                     @if($trx->payment_status->value === 'paid')
                         <span class="badge bg-green">Lunas</span>
                     @elseif($trx->payment_status->value === 'returned')
@@ -44,14 +47,14 @@
                     @endif
                 </td>
 
-                <td>{{ $trx->user->name }}</td>
+                <td style="text-align: center">{{ $trx->user->name }}</td>
             </tr>
         @endforeach
         </tbody>
         <tfoot>
         <tr class="total-row">
-            <td colspan="4" class="right">Grand Total (Net)</td>
-            <td class="right">
+            <td colspan="5" style="text-align: right">Grand Total (Net)</td>
+            <td style="text-align: center">
                 {{ number_format($transactions->where('payment_status.value', '!=', 'returned')->sum('grand_total'), 0, ',', '.') }}
             </td>
             <td colspan="3"></td>

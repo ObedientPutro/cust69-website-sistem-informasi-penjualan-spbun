@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PumpShiftStatusEnum;
 use App\Models\PumpShift;
 use App\Models\Transaction;
@@ -16,6 +17,7 @@ class ShiftService
 {
     /**
      * Membuka Shift Baru (Pagi/Awal)
+     * @throws \Throwable
      */
     public function openShift(array $data): PumpShift
     {
@@ -58,11 +60,11 @@ class ShiftService
 
     /**
      * Menutup Shift & Melakukan Snapshot Data Sistem
+     * @throws \Throwable
      */
     public function closeShift(PumpShift $shift, array $data): PumpShift
     {
         return DB::transaction(function () use ($shift, $data) {
-            // ... (Validasi closing_totalizer < opening TETAP SAMA) ...
             if ($data['closing_totalizer'] < $shift->opening_totalizer) {
                 throw ValidationException::withMessages([
                     'closing_totalizer' => "Meteran akhir ({$data['closing_totalizer']}) tidak boleh lebih kecil dari awal ({$shift->opening_totalizer})."
@@ -72,20 +74,15 @@ class ShiftService
             // 1. Hitung Fisik (Totalizer)
             $literSoldPhysical = $data['closing_totalizer'] - $shift->opening_totalizer;
 
-            // 2. Hitung Sistem (Transaksi yang tercatat di shift ini)
-            // Asumsi: Transaksi memiliki pump_shift_id, atau berdasarkan range waktu
-            $systemSummary = Transaction::where('pump_shift_id', $shift->id)
-                ->orWhere(function($q) use ($shift) {
-                    // Fallback jika pump_shift_id null, cari berdasarkan range waktu & produk
-                    $q->whereBetween('transaction_date', [$shift->opened_at, Carbon::now()])
-                        ->whereHas('items', fn($i) => $i->where('product_id', $shift->product_id));
-                })
+            // 2. Hitung Sistem (Transaksi Valid Saja)
+            $validTransactions = Transaction::forShift($shift)
+                ->valid()
                 ->with('items')
                 ->get();
 
             // Hitung total liter dari transaksi sistem
-            $literSoldSystem = $systemSummary->sum(fn($t) => $t->items->where('product_id', $shift->product_id)->sum('quantity_liter'));
-            $amountSystem = $systemSummary->sum('grand_total');
+            $literSoldSystem = $validTransactions->sum(fn($t) => $t->items->where('product_id', $shift->product_id)->sum('quantity_liter'));
+            $amountSystem = $validTransactions->sum('grand_total');
 
             $proofPath = null;
             if (isset($data['closing_proof']) && $data['closing_proof'] instanceof UploadedFile) {

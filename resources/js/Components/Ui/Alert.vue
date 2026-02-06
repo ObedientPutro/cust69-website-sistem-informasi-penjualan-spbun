@@ -4,7 +4,7 @@ import {
     InfoCircleIcon,
     SuccessIcon,
     WarningIcon,
-} from '@/Components/icons';
+} from '@/Components/Icons';
 import { Link } from '@inertiajs/vue3';
 
 interface AlertProps {

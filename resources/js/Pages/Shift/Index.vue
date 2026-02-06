@@ -13,6 +13,7 @@ import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import Badge from '@/Components/Ui/Badge.vue';
 import Modal from '@/Components/Ui/Modal.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
+import CurrencyInput from "@/Components/FormElements/CurrencyInput.vue";
 
 const props = defineProps<{
     products: any[];
@@ -56,13 +57,13 @@ watch(filterForm, () => applyFilter(), { deep: true });
 // --- FORM & MODAL LOGIC (Tetap Sama) ---
 const openForm = useForm({
     product_id: '',
-    opening_totalizer: '',
+    opening_totalizer: 0,
     opening_proof: null as File | null,
 });
 
 const closeForm = useForm({
-    closing_totalizer: '',
-    cash_collected: '',
+    closing_totalizer: 0,
+    cash_collected: 0,
     closing_proof: null as File | null,
 });
 
@@ -164,8 +165,6 @@ const formatNumber = (num: number | string) => {
     // 2. Format ID tanpa pemisah ribuan (useGrouping: false)
     // Contoh: 12345.50 -> "12345,50"
     return new Intl.NumberFormat('id-ID', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
         useGrouping: false // <--- INI KUNCINYA (Matikan Titik Ribuan)
     }).format(value);
 };
@@ -390,8 +389,21 @@ const formatNumber = (num: number | string) => {
                         Meter Awal: <span class="font-mono">{{ selectedShift?.opening_totalizer }}</span>
                     </p>
                 </div>
-                <TextInput v-model="closeForm.closing_totalizer" type="number" step="0.01" label="Angka Meteran Akhir (Wajib)" required :error="closeForm.errors.closing_totalizer" />
-                <TextInput v-model="closeForm.cash_collected" type="number" label="Total Uang Fisik (Cash Drawer)" required :error="closeForm.errors.cash_collected" />
+                <TextInput
+                    v-model="closeForm.closing_totalizer"
+                    type="number"
+                    step="0.01"
+                    label="Angka Meteran Akhir (Wajib)"
+                    required
+                    :error="closeForm.errors.closing_totalizer"
+                />
+                <CurrencyInput
+                    v-model="closeForm.cash_collected"
+                    label="Total Uang Fisik / Uang Cash Penjualan Shift Sekarang"
+                    prefix="Rp"
+                    required
+                    :error="closeForm.errors.cash_collected"
+                />
                 <FileDropzone v-model="closeForm.closing_proof" label="Foto Bukti Meteran Akhir (Opsional)" accept="image/*" />
                 <div class="pt-4 border-t dark:border-gray-700 flex justify-end gap-3">
                     <Button type="button" variant="outline" @click="isCloseModalVisible = false">Batal</Button>

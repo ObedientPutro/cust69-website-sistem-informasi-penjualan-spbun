@@ -10,7 +10,7 @@ const props = defineProps<{
     inventory: any[];
     trends: {
         volume_series: { categories: string[], series: any[] };
-        payment_stats: any[]; // Data List Pembayaran
+        payment_stats: any[];
         debt_ratio_series: { labels: string[], data: number[] }
     };
     lists: {
@@ -22,13 +22,35 @@ const props = defineProps<{
 
 const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 const formatNumber = (val: number) => new Intl.NumberFormat('id-ID').format(val);
+
+// Helper untuk warna status stok
+const getStockStatusClass = (status: string) => {
+    switch (status) {
+        case 'empty':
+        case 'critical':
+            return 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300';
+        case 'warning':
+            return 'bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-300';
+        default:
+            return 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300';
+    }
+};
+
+const getStockIcon = (status: string) => {
+    if (status === 'empty' || status === 'critical') {
+        return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'; // Warning Triangle
+    } else if (status === 'warning') {
+        return 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'; // Clock
+    } else {
+        return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'; // Check Circle
+    }
+};
 </script>
 
 <template>
     <div class="space-y-6">
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
-
             <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex items-center gap-4">
                     <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
@@ -121,7 +143,6 @@ const formatNumber = (val: number) => new Intl.NumberFormat('id-ID').format(val)
                     <span class="ml-2 text-xs text-gray-400">Total Liter Keluar</span>
                 </div>
             </div>
-
         </div>
 
         <div class="grid grid-cols-12 gap-6">
@@ -146,18 +167,18 @@ const formatNumber = (val: number) => new Intl.NumberFormat('id-ID').format(val)
                         <table class="w-full text-left text-sm">
                             <thead>
                             <tr class="text-gray-500 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                                <th class="py-3 px-4 rounded-tl-lg">Pemilik / Kapal</th>
-                                <th class="py-3 px-4 text-right">Total Hutang</th>
+                                <th class="py-3 px-4 rounded-tl-lg">Nama Kapal / Pemilik</th>
+                                <th class="py-3 px-4">Total Hutang</th>
                                 <th class="py-3 px-4 text-center rounded-tr-lg">Frekuensi</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr v-for="(debtor, idx) in lists.debtors" :key="idx" class="border-b last:border-0 dark:border-gray-800">
                                 <td class="py-3 px-4">
-                                    <p class="font-bold text-gray-800 dark:text-white">{{ debtor.owner_name }}</p>
-                                    <p class="text-xs text-gray-500">{{ debtor.ship_name }}</p>
+                                    <p class="font-bold text-gray-800 dark:text-white text-base">{{ debtor.ship_name }}</p>
+                                    <p class="text-xs text-gray-500">{{ debtor.owner_name }}</p>
                                 </td>
-                                <td class="py-3 px-4 text-right font-mono font-bold text-red-500">{{ formatRupiah(debtor.total_debt) }}</td>
+                                <td class="py-3 px-4 font-mono font-bold text-red-500">{{ formatRupiah(debtor.total_debt) }}</td>
                                 <td class="py-3 px-4 text-center"><span class="bg-gray-100 px-2 py-1 rounded text-xs text-gray-600">{{ debtor.bon_count }}x</span></td>
                             </tr>
                             <tr v-if="lists.debtors.length === 0"><td colspan="3" class="text-center py-4 text-gray-500">Tidak ada piutang.</td></tr>
@@ -175,18 +196,22 @@ const formatNumber = (val: number) => new Intl.NumberFormat('id-ID').format(val)
                         <table class="w-full text-left text-sm">
                             <thead>
                             <tr class="text-gray-500 border-b dark:border-gray-700">
-                                <th class="pb-2 font-medium">Pelanggan</th>
-                                <th class="pb-2 font-medium text-right">Total</th>
+                                <th class="pb-2 font-medium">Kapal / Pelanggan</th>
+                                <th class="pb-2 font-medium">Produk</th>
+                                <th class="pb-2 font-medium">Total</th>
                                 <th class="pb-2 font-medium text-center">Status</th>
                             </tr>
                             </thead>
                             <tbody class="divide-y dark:divide-gray-800">
                             <tr v-for="trx in lists.recent_transactions" :key="trx.id">
                                 <td class="py-3">
-                                    <p class="font-bold text-gray-800 dark:text-white">{{ trx.customer }}</p>
-                                    <p class="text-[10px] text-gray-500 truncate max-w-[200px]">{{ trx.items }}</p>
+                                    <p class="font-bold text-gray-800 dark:text-white text-base">
+                                        {{ trx.ship_name ?? trx.customer }}
+                                    </p>
+                                    <p v-if="trx.owner_name" class="text-xs text-gray-500">{{ trx.owner_name }}</p>
                                 </td>
-                                <td class="py-3 text-right font-mono font-medium">{{ formatRupiah(trx.total) }}</td>
+                                <td class="py-3 font-medium">{{ trx.items }}</td>
+                                <td class="py-3 font-mono font-medium">{{ formatRupiah(trx.total) }}</td>
                                 <td class="py-3 text-center">
                                     <Badge :color="trx.status === 'paid' ? 'success' : (trx.status === 'returned' ? 'error' : 'warning')" size="sm">{{ trx.status }}</Badge>
                                 </td>
@@ -231,20 +256,31 @@ const formatNumber = (val: number) => new Intl.NumberFormat('id-ID').format(val)
 
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-800 dark:text-white">Monitoring Stok</h3>
+                        <h3 class="font-bold text-gray-800 dark:text-white">Estimasi Stok</h3>
                         <Link :href="route('restock-history.index')" class="text-xs font-bold text-brand-600 hover:underline">+ Restock</Link>
                     </div>
-                    <div class="space-y-4">
-                        <div v-for="item in inventory" :key="item.id">
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ item.name }}</span>
-                                <div class="text-right">
-                                    <span class="font-bold" :class="{'text-red-500': item.status === 'critical', 'text-yellow-500': item.status === 'warning'}">{{ item.days_to_empty }}</span>
-                                    <span class="text-gray-400 text-xs ml-1">(Sisa {{ item.stock }})</span>
+
+                    <div class="space-y-3">
+                        <div v-for="item in inventory" :key="item.id"
+                             class="p-4 rounded-xl border flex justify-between items-start transition-all hover:shadow-sm"
+                             :class="getStockStatusClass(item.status)"
+                        >
+                            <div class="flex-1">
+                                <p class="text-[10px] uppercase font-bold tracking-wider opacity-70 mb-0.5">
+                                    {{ item.name }}
+                                </p>
+                                <h4 class="text-lg font-extrabold leading-tight">
+                                    {{ item.days_to_empty }}
+                                </h4>
+                                <div class="mt-2 flex items-center gap-2 text-xs font-medium opacity-90">
+                                    <span>Sisa: {{ formatNumber(item.stock) }} {{ item.unit }}</span>
                                 </div>
                             </div>
-                            <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden dark:bg-gray-700">
-                                <div class="h-full rounded-full transition-all duration-1000" :class="{'bg-red-500': item.status === 'critical', 'bg-yellow-500': item.status === 'warning', 'bg-blue-500': item.status === 'safe'}" :style="{ width: Math.min(100, (item.stock / 5000) * 100) + '%' }"></div>
+
+                            <div class="p-2 rounded-full bg-white/50 backdrop-blur-sm">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getStockIcon(item.status)" />
+                                </svg>
                             </div>
                         </div>
                     </div>

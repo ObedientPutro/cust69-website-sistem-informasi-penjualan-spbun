@@ -51,7 +51,7 @@
     <tr>
         <td width="15%" class="center">
             @if(isset($settings) && $settings->logo_left)
-                <img src="{{ public_path('storage/' . $settings->logo_left) }}" class="logo-img">
+                <img src="{{ $settings->logoLeftBase64 }}" class="logo-img">
             @endif
         </td>
 
@@ -67,7 +67,7 @@
 
         <td width="15%" class="center">
             @if(isset($settings) && $settings->logo_right)
-                <img src="{{ public_path('storage/' . $settings->logo_right) }}" class="logo-img">
+                <img src="{{ $settings->logoRightBase64 }}" class="logo-img">
             @endif
         </td>
     </tr>

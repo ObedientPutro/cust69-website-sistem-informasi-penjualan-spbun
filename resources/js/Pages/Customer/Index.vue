@@ -12,6 +12,7 @@ import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
 import ImageViewerModal from '@/Components/Ui/ImageViewerModal.vue';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
+import CurrencyInput from "@/Components/FormElements/CurrencyInput.vue";
 
 const props = defineProps<{
     customers: any;
@@ -357,13 +358,13 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                     </div>
 
                     <div class="mb-6">
-                        <TextInput
+                        <CurrencyInput
                             v-model="limitForm.amount"
-                            type="number"
                             label="Nominal Perubahan"
+                            prefix="Rp"
                             placeholder="0"
-                            class="text-lg font-bold"
                             required
+                            class="text-lg font-bold"
                         />
                     </div>
 

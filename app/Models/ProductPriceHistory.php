@@ -23,10 +23,10 @@ class ProductPriceHistory extends Model
 
     protected $casts = [
         'type' => ProductPriceHistoryTypeEnum::class,
-        'old_price' => 'decimal:2',
-        'new_price' => 'decimal:2',
-        'old_cost_price' => 'decimal:2',
-        'new_cost_price' => 'decimal:2',
+        'old_price' => 'float',
+        'new_price' => 'float',
+        'old_cost_price' => 'float',
+        'new_cost_price' => 'float',
     ];
 
     // --- Relationships ---

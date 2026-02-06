@@ -13,7 +13,9 @@ import SelectInput from '@/Components/FormElements/SelectInput.vue'; // Import S
 import TextArea from '@/Components/FormElements/TextArea.vue'; // Import Textarea
 import { DocsIcon } from '@/Components/Icons';
 import { useSweetAlert } from '@/Composables/useSweetAlert';
-import DecimalInput from "@/Components/FormElements/DecimalInput.vue"; // Import Alert
+import DecimalInput from "@/Components/FormElements/DecimalInput.vue";
+import IntegerInput from "@/Components/FormElements/IntegerInput.vue";
+import CurrencyInput from "@/Components/FormElements/CurrencyInput.vue"; // Import Alert
 
 const props = defineProps<{
     logs: any;
@@ -158,14 +160,21 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <DecimalInput
+                    <IntegerInput
                         v-model="editForm.volume_liter"
                         label="Volume (Liter)"
-                        placeholder="0.000"
+                        placeholder="0"
                         suffix="Liter"
                         required
+                        :error="editForm.errors.volume_liter"
                     />
-                    <TextInput v-model="editForm.total_cost" type="number" label="Total Harga (Rp)" required />
+                    <CurrencyInput
+                        v-model="editForm.total_cost"
+                        label="Total Harga (Rp)"
+                        prefix="Rp"
+                        required
+                        :error="editForm.errors.total_cost"
+                    />
                 </div>
 
                 <TextArea v-model="editForm.note" label="No. DO / Catatan" />
