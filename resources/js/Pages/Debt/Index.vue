@@ -38,13 +38,33 @@ const filterForm = ref({
     payment_status: props.filters.payment_status || '',
 });
 
-const applyFilter = debounce(() => {
-    router.get(route('debts.index'), pickBy(filterForm.value), {
-        preserveState: true, preserveScroll: true, replace: true
-    });
+const applySearch = debounce(() => {
+    applyFilter();
 }, 500);
 
-watch(filterForm, () => applyFilter(), { deep: true });
+const applyFilter = () => {
+    router.get(route('debts.index'), pickBy(filterForm.value), {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    });
+};
+
+watch(() => filterForm.value.search, applySearch);
+watch(() => [
+    filterForm.value.start_date,
+    filterForm.value.end_date,
+    filterForm.value.product_id,
+    filterForm.value.payment_status,
+], applyFilter);
+
+watch(() => props.filters, (newFilters) => {
+    filterForm.value.search = newFilters.search || '';
+    filterForm.value.start_date = newFilters.start_date || '';
+    filterForm.value.end_date = newFilters.end_date || '';
+    filterForm.value.product_id = newFilters.product_id || '';
+    filterForm.value.payment_status = newFilters.payment_status || '';
+}, { deep: true });
 
 // --- TABLE CONFIG ---
 const columns = [
@@ -188,7 +208,14 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
             </MetricCard>
         </div>
 
-        <DataTable :rows="debts.data" :columns="columns" :pagination="debts" :filters="filters" :enableActions="false">
+        <DataTable
+            :rows="debts.data"
+            :columns="columns"
+            :pagination="debts"
+            :filters="filters"
+            :enableActions="false"
+            :searchInfo="'Cari Kode TRX atau Nama Kapal'"
+        >
             <template #cell-transaction_date="{ row }">
                 <div class="text-sm">
                     <span class="font-bold text-brand-600 dark:text-brand-400 block">{{ row.trx_code }}</span>

@@ -81,11 +81,12 @@ class ReportController extends Controller
             }
 
             return ExportHelper::toCsv(
-                "Sales_Detail_$start.csv",
+                "Sales_Summary_$start.csv",
                 [
-                    'Tanggal', 'Fisik Liter (Mesin)', 'Sistem Liter', 'Selisih Liter',
+                    'Tanggal',
+                    'Fisik (L)', 'Sistem (L)', 'Selisih (L)',
                     'Omset Cash', 'Omset Transfer', 'Omset Bon', 'Total Omset',
-                    'Uang Fisik (Laci)', 'Selisih Uang'
+                    'Uang Fisik (Laci)', 'Selisih Kas'
                 ],
                 $data,
                 function ($row) {
@@ -114,12 +115,14 @@ class ReportController extends Controller
 
             return ExportHelper::toCsv(
                 "Stock_$start.csv",
-                ['Tanggal', 'Tipe', 'Produk', 'Ref', 'Masuk', 'Keluar'],
+                ['Tanggal', 'Waktu', 'Tipe', 'Produk', 'Pelanggan / Kapal', 'Ref / Note', 'Masuk (L)', 'Keluar (L)'],
                 $data,
                 fn($row) => [
-                    $row['date']->format('Y-m-d H:i'),
+                    ($row['date'] instanceof \Carbon\Carbon) ? $row['date']->format('Y-m-d') : substr($row['date'], 0, 10),
+                    ($row['date'] instanceof \Carbon\Carbon) ? $row['date']->format('H:i') : substr($row['date'], 11, 5),
                     $row['type'],
                     $row['product_name'],
+                    $row['customer_name'] ?? '-',
                     $row['ref'],
                     $row['qty_in'],
                     $row['qty_out']

@@ -205,6 +205,7 @@ const toggleStatus = (product: any) => {
             :columns="columns"
             :filters="filters"
             :pagination="products"
+            :searchInfo="'Cari Nama Produk'"
         >
             <template #actions>
                 <Button @click="openCreateModal" size="sm" variant="primary">

@@ -108,7 +108,14 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
             </div>
         </div>
 
-        <DataTable :rows="logs.data" :columns="columns" :pagination="logs" :filters="filters" :enableActions="isOwner">
+        <DataTable
+            :rows="logs.data"
+            :columns="columns"
+            :pagination="logs"
+            :filters="filters"
+            :enableActions="isOwner"
+            :searchInfo="'Cari Catatan & Nama yang Restock'"
+        >
             <template #filters>
                 <div class="flex flex-col sm:flex-row gap-3 w-full justify-between items-end">
                     <div class="flex gap-2 w-full sm:w-auto">

@@ -49,8 +49,8 @@ class TransactionHistoryController extends Controller
             'total_void_amount' => $totalVoidAmount,
         ];
 
-        if ($request->has('sort') && $request->has('direction')) {
-            $query->orderBy($request->sort, $request->direction);
+        if ($request->filled('sort') && $request->filled('direction')) {
+            $query->orderBy($request->input('sort'), $request->input('direction'));
         } else {
             $query->latest('transaction_date');
         }
@@ -99,20 +99,27 @@ class TransactionHistoryController extends Controller
 
         return ExportHelper::toCsv(
             'Laporan_Transaksi_' . date('Ymd_His') . '.csv',
-            ['Tgl', 'Ref ID', 'Customer', 'Items', 'Total', 'Metode', 'Status', 'Kasir'],
+            ['Tanggal', 'Waktu', 'No Nota', 'Pelanggan / Kapal', 'Item Produk', 'Total (Rp)', 'Metode', 'Status', 'Kasir'],
             $query,
             function ($row) {
-                // Logic string building items
-                $itemsString = $row->items->map(fn($i) => $i->product->name . ' (' . $i->quantity_liter . 'L)')->join(', ');
+                $customerName = 'Umum';
+                if ($row->customer) {
+                    $customerName = $row->customer->ship_name ?? $row->customer->owner_name;
+                }
+
+                $itemsString = $row->items->map(fn($i) =>
+                    $i->product->name . ' (' . (float)$i->quantity_liter . 'L)'
+                )->join(', ');
 
                 return [
-                    $row->transaction_date->format('Y-m-d H:i'),
-                    '#' . $row->id,
-                    $row->customer ? $row->customer->name : 'Umum',
+                    $row->transaction_date->format('Y-m-d'),
+                    $row->transaction_date->format('H:i'),
+                    $row->trx_code ?? ('#' . $row->id),
+                    $customerName,
                     $itemsString,
                     $row->grand_total,
-                    $row->payment_method->value,
-                    $row->payment_status->value,
+                    ucfirst($row->payment_method->value),
+                    ucfirst($row->payment_status->value),
                     $row->user->name
                 ];
             }

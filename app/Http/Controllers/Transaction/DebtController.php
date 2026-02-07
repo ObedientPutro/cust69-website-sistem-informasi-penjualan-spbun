@@ -39,11 +39,8 @@ class DebtController extends Controller
             ]);
         }
 
-        if ($search) {
-            $query->whereHas('customer', function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('ship_name', 'like', "%{$search}%");
-            });
+        if ($paymentStatus) {
+            $query->where('payment_status', $paymentStatus);
         }
 
         if ($productId) {
@@ -52,8 +49,13 @@ class DebtController extends Controller
             });
         }
 
-        if ($paymentStatus) {
-            $query->where('payment_status', $paymentStatus);
+        if ($search) {
+            $query->where(function($subQuery) use ($search) {
+                $subQuery->where('trx_code', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function($q) use ($search) {
+                        $q->where('ship_name', 'like', "%{$search}%");
+                    });
+            });
         }
 
         // --- SORTING ---

@@ -113,7 +113,14 @@ const getDifferenceStatus = (diff: number, systemStock: number) => {
             </div>
         </div>
 
-        <DataTable :rows="logs.data" :columns="columns" :pagination="logs" :filters="filters" :enableActions="isOwner">
+        <DataTable
+            :rows="logs.data"
+            :columns="columns"
+            :pagination="logs"
+            :filters="filters"
+            :enableActions="isOwner"
+            :searchInfo="'Cari Nama Operator'"
+        >
             <template #filters>
                 <div class="flex flex-col sm:flex-row gap-3 w-full justify-between items-end">
                     <div class="flex gap-2 w-full sm:w-auto">

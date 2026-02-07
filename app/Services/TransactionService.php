@@ -272,21 +272,6 @@ class TransactionService
             ]);
         }
 
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%") // Asumsi ID sebagai No Ref
-                ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"));
-            });
-        }
-
-        if (!empty($filters['product_id'])) {
-            $query->whereHas('items', function($q) use ($filters) {
-                $q->where('product_id', $filters['product_id']);
-            });
-        }
-
         if (!empty($filters['payment_status'])) {
             $query->where('payment_status', $filters['payment_status']);
         }
@@ -295,7 +280,23 @@ class TransactionService
             $query->where('payment_method', $filters['payment_method']);
         }
 
-        return $query->latest('transaction_date');
+        if (!empty($filters['product_id'])) {
+            $query->whereHas('items', function($q) use ($filters) {
+                $q->where('product_id', $filters['product_id']);
+            });
+        }
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function($subQuery) use ($search) {
+                $subQuery->where('trx_code', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function($q) use ($search) {
+                        $q->where('ship_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        return $query;
     }
 
     /**

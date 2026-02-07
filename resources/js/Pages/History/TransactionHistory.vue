@@ -62,6 +62,15 @@ watch(() => [
     filterForm.value.payment_method
 ], applyFilter);
 
+watch(() => props.filters, (newFilters) => {
+    filterForm.value.search = newFilters.search || '';
+    filterForm.value.start_date = newFilters.start_date || '';
+    filterForm.value.end_date = newFilters.end_date || '';
+    filterForm.value.product_id = newFilters.product_id || '';
+    filterForm.value.payment_status = newFilters.payment_status || '';
+    filterForm.value.payment_method = newFilters.payment_method || '';
+}, { deep: true });
+
 // --- TABLE COLUMNS ---
 const columns = [
     { label: 'Kode / Waktu', key: 'transaction_date', sortable: true, align: 'left' },
@@ -222,7 +231,14 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
             </MetricCard>
         </div>
 
-        <DataTable :rows="transactions.data" :columns="columns" :pagination="transactions" :filters="filters" :enableActions="true">
+        <DataTable
+            :rows="transactions.data"
+            :columns="columns"
+            :pagination="transactions"
+            :filters="filters"
+            :enableActions="true"
+            :searchInfo="'Cari Kode TRX atau Nama Kapal'"
+        >
             <template #cell-transaction_date="{ row }">
                 <div class="text-sm">
                     <span class="font-bold text-brand-600 dark:text-brand-400 block">{{ row.trx_code }}</span>

@@ -9,6 +9,7 @@ const props = withDefaults(defineProps<{
     filters?: { search?: string; sort?: string; direction?: string };
     pagination?: any;
     enableActions?: boolean;
+    searchInfo?: string;
 }>(), {
     enableActions: true
 });
@@ -78,7 +79,7 @@ const refreshTable = (params: object) => {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Search data..."
+                        :placeholder="searchInfo ?? 'Search data...'"
                         class="focus:border-brand-500 focus:ring-brand-500/20 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pr-4 pl-10 text-sm dark:border-gray-700 dark:bg-gray-900"
                     />
                     <span

@@ -154,6 +154,7 @@ const openImageViewer = (url: string, alt: string) => {
             :columns="columns"
             :filters="filters"
             :pagination="users"
+            :searchInfo="'Cari Nama User'"
         >
             <template #actions>
                 <Button @click="openCreateModal" size="sm" variant="primary">

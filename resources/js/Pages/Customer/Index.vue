@@ -207,7 +207,13 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
             </div>
         </div>
 
-        <DataTable :rows="customers.data" :columns="columns" :pagination="customers" :filters="filters">
+        <DataTable
+            :rows="customers.data"
+            :columns="columns"
+            :pagination="customers"
+            :filters="filters"
+            :searchInfo="'Cari Nama Kapal, Pemilik, Pengelola, No Telp'"
+        >
             <template #actions>
                 <div class="flex gap-2">
                     <Button @click="openCreate" size="sm" variant="primary">

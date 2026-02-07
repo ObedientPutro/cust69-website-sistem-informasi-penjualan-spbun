@@ -89,11 +89,12 @@ class SoundingHistoryController extends Controller
 
         return ExportHelper::toCsv(
             "Audit_Tangki_{$startDate}.csv",
-            ['Waktu Cek', 'Produk', 'Tinggi (cm)', 'Stok Sistem (L)', 'Stok Fisik (L)', 'Selisih (L)', 'Petugas'],
+            ['Tanggal', 'Jam', 'Produk', 'Tinggi (cm)', 'Stok Sistem (L)', 'Stok Fisik (L)', 'Selisih (L)', 'Petugas'],
             $query,
             function ($row) {
                 return [
-                    $row->recorded_at->format('Y-m-d H:i'),
+                    $row->recorded_at->format('Y-m-d'),
+                    $row->recorded_at->format('H:i'),
                     $row->product->name,
                     $row->physical_height_cm ?? '-',
                     $row->system_liter_snapshot,

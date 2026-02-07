@@ -175,6 +175,16 @@ const checkActiveMenu = () => {
     });
 };
 
+// Cek apakah device mendukung hover (Mouse)
+// Jika touchscreen, logic ini akan return false, jadi sidebar TIDAK expand saat ditap
+const handleMouseEnter = () => {
+    if (window.matchMedia('(hover: hover)').matches) {
+        if (!isExpanded.value) {
+            isHovered.value = true;
+        }
+    }
+};
+
 onMounted(() => {
     checkActiveMenu();
 });
@@ -215,12 +225,12 @@ const onLeave = (el) => {
                 'lg:translate-x-0': true,
             },
         ]"
-        @mouseenter="!isExpanded && (isHovered = true)"
+        @mouseenter="handleMouseEnter"
         @mouseleave="isHovered = false"
     >
         <div
             :class="[
-                'flex py-8',
+                'flex h-24 items-center',
                 !isExpanded && !isHovered
                     ? 'lg:justify-center'
                     : 'justify-start',

@@ -96,11 +96,12 @@ class RestockHistoryController extends Controller
 
         return ExportHelper::toCsv(
             "Restock_DO_{$startDate}.csv",
-            ['Tanggal', 'No. DO / Ref', 'Produk', 'Volume (L)', 'Total Harga (Rp)', 'Admin'],
+            ['Tanggal', 'Jam', 'No. DO / Ref', 'Produk', 'Volume (L)', 'Total Harga (Rp)', 'Admin'],
             $query,
-            function ($row) { // Mapper Function
+            function ($row) {
                 return [
                     $row->date->format('Y-m-d'),
+                    $row->date->format('H:i'),
                     $row->note ?? '-',
                     $row->product->name,
                     $row->volume_liter,
