@@ -17,12 +17,18 @@
         </thead>
         <tbody>
         @foreach($transactions as $trx)
-            <tr>
+            <tr style="{{ $trx->is_backdate ? 'background-color: #fffbeb;' : '' }}">
                 <td style="text-align: center">{{ $loop->iteration }}</td>
                 <td style="text-align: center">{{ $trx->transaction_date->format('d/m/Y H:i') }}</td>
 
                 <td style="font-family: monospace; font-size: 9pt; text-align: center">
                     {{ $trx->trx_code }}
+                    @if($trx->is_backdate)
+                        <br>
+                        <span style="font-size: 7pt; font-weight: bold; color: #b45309; background-color: #fcd34d; padding: 1px 3px; border-radius: 2px;">
+                            BACKDATE
+                        </span>
+                    @endif
                 </td>
 
                 <td>{{ $trx->customer ? $trx->customer->ship_name : 'Umum' }}</td>

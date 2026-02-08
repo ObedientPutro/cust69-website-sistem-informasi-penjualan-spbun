@@ -115,6 +115,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
         });
 
+        // BACKDATE TRANSACTION ROUTES
+        Route::get('/transactions/backdate', [TransactionController::class, 'createBackdate'])->name('transactions.backdate');
+        Route::post('/transactions/backdate', [TransactionController::class, 'storeBackdate'])->name('transactions.store-backdate');
+
         // CRUD Transaksi (Edit & Hapus & Update Backdate)
         Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
         Route::post('/transactions/{transaction}', [TransactionController::class, 'return'])->name('transactions.return');

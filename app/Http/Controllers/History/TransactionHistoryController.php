@@ -99,7 +99,7 @@ class TransactionHistoryController extends Controller
 
         return ExportHelper::toCsv(
             'Laporan_Transaksi_' . date('Ymd_His') . '.csv',
-            ['Tanggal', 'Waktu', 'No Nota', 'Pelanggan / Kapal', 'Item Produk', 'Total (Rp)', 'Metode', 'Status', 'Kasir'],
+            ['Tanggal', 'Waktu', 'No Nota', 'Jenis', 'Pelanggan', 'Item', 'Total', 'Metode', 'Status', 'Kasir'],
             $query,
             function ($row) {
                 $customerName = 'Umum';
@@ -115,6 +115,7 @@ class TransactionHistoryController extends Controller
                     $row->transaction_date->format('Y-m-d'),
                     $row->transaction_date->format('H:i'),
                     $row->trx_code ?? ('#' . $row->id),
+                    $row->is_backdate ? 'BACKDATE (LAMPAU)' : 'REGULER (POS)',
                     $customerName,
                     $itemsString,
                     $row->grand_total,

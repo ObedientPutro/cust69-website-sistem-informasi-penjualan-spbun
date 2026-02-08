@@ -85,7 +85,8 @@ class ReportController extends Controller
                 [
                     'Tanggal',
                     'Fisik (L)', 'Sistem (L)', 'Selisih (L)',
-                    'Omset Cash', 'Omset Transfer', 'Omset Bon', 'Total Omset',
+                    'Omset Cash', 'Omset Transfer', 'Omset Bon',
+                    'Total Omset', 'Omset Backdate (Lampau)',
                     'Uang Fisik (Laci)', 'Selisih Kas'
                 ],
                 $data,
@@ -99,6 +100,7 @@ class ReportController extends Controller
                         $row['sys_transfer'],
                         $row['sys_bon'],
                         $row['sys_total'],
+                        $row['sys_backdate'],
                         $row['phys_cash'],
                         $row['diff_cash']
                     ];

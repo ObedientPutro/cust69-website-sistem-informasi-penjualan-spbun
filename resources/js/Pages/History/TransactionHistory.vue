@@ -268,7 +268,13 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
             </template>
 
             <template #cell-payment_method="{ row }">
-                <span class="uppercase text-xs font-bold text-gray-500">{{ row.payment_method }}</span>
+                <div class="flex flex-col items-center">
+                    <span class="uppercase text-xs font-bold text-gray-500">{{ row.payment_method }}</span>
+
+                    <span v-if="row.is_backdate" class="mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                        LAMPAU
+                    </span>
+                </div>
             </template>
 
             <template #cell-payment_status="{ row }">

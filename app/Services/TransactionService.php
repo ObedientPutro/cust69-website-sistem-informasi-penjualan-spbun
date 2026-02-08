@@ -91,6 +91,7 @@ class TransactionService
 
             $transaction = Transaction::create([
                 'trx_code' => $trxCode,
+                'is_backdate' => false,
                 'user_id' => $user->id,
                 'customer_id' => $data['customer_id'] ?? null,
                 'pump_shift_id' => $pumpShiftId,
@@ -313,19 +314,114 @@ class TransactionService
     }
 
     /**
+     * INPUT TRANSAKSI LAMPAU (BACKDATE) - KHUSUS OWNER
+     * @throws \Throwable
+     */
+    public function createBackdateTransaction(array $data, $fileProof = null): Transaction
+    {
+        return DB::transaction(function () use ($data, $fileProof) {
+            $user = Auth::user();
+
+            // Gunakan tanggal inputan untuk generate kode
+            $inputDate = Carbon::parse($data['transaction_date']);
+            $trxCode = $this->generateTrxCode('BKD', $inputDate);
+
+            $grandTotal = 0;
+            $itemsPayload = [];
+
+            // 1. Loop Item & Validasi Stok Current
+            foreach ($data['items'] as $item) {
+                // Lock row product untuk mencegah race condition stok
+                $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
+
+                $subtotal = $item['quantity_liter'] * $product->price;
+                $grandTotal += $subtotal;
+
+                $itemsPayload[] = [
+                    'product' => $product,
+                    'quantity_liter' => $item['quantity_liter'],
+                    'price_per_liter' => $product->price,
+                    'cost_per_liter' => $product->cost_price,
+                    'subtotal' => $subtotal,
+                ];
+            }
+
+            // 2. Handle Payment Method (Bon / Hutang)
+            $paymentStatus = PaymentStatusEnum::PAID;
+
+            if ($data['payment_method'] == PaymentMethodEnum::BON->value) {
+                $customer = Customer::where('id', $data['customer_id'])->lockForUpdate()->firstOrFail();
+
+                if (!$customer->is_active) {
+                    throw ValidationException::withMessages(['customer_id' => 'Akun pelanggan non-aktif.']);
+                }
+
+                if ($customer->credit_limit < $grandTotal) {
+                    throw ValidationException::withMessages(['customer_id' => 'Limit kredit pelanggan tidak cukup.']);
+                }
+
+                // Potong limit
+                $customer->decrement('credit_limit', $grandTotal);
+                $paymentStatus = PaymentStatusEnum::UNPAID;
+            }
+
+            // 3. Handle Bukti Transfer (Jika ada)
+            $proofPath = null;
+            if ($data['payment_method'] == PaymentMethodEnum::TRANSFER->value && $fileProof) {
+                $proofPath = $fileProof->store('payment_proofs', 'public');
+            }
+
+            // 4. Simpan Transaksi (PUMP_SHIFT_ID = NULL)
+            $transaction = Transaction::create([
+                'trx_code' => $trxCode,
+                'is_backdate' => true,
+                'user_id' => $user->id,
+                'customer_id' => $data['customer_id'],
+                'pump_shift_id' => null, // <--- PENTING: NULL (Tidak masuk laporan shift harian operator)
+                'transaction_date' => $inputDate->setTimeFrom(Carbon::now()), // Tgl Input + Jam Sekarang (atau set 00:00 bebas)
+                'payment_method' => $data['payment_method'],
+                'payment_status' => $paymentStatus,
+                'payment_proof' => $proofPath,
+                'grand_total' => $grandTotal,
+                'note' => ($data['note'] ?? '') . ' [Input Manual/Backdate]',
+            ]);
+
+            // 5. Simpan Item & Kurangi Stok
+            foreach ($itemsPayload as $payload) {
+                TransactionItem::create([
+                    'transaction_id' => $transaction->id,
+                    'product_id' => $payload['product']->id,
+                    'quantity_liter' => $payload['quantity_liter'],
+                    'price_per_liter' => $payload['price_per_liter'],
+                    'cost_per_liter' => $payload['cost_per_liter'],
+                    'subtotal' => $payload['subtotal'],
+                ]);
+
+            }
+
+            return $transaction;
+        });
+    }
+
+    /**
      * Generate Kode Transaksi Unik: TRX-YYMMDD-XXXX
      */
-    private function generateTrxCode(): string
+    private function generateTrxCode(string $prefix = 'TRX', Carbon $date = null): string
     {
-        $dateCode = Carbon::now()->format('ymd');
-        $lastTrx = Transaction::whereDate('created_at', Carbon::today())->latest()->first();
+        $targetDate = $date ?? Carbon::now();
+        $dateCode = $targetDate->format('ymd');
 
-        if ($lastTrx && preg_match('/TRX-\d+-(\d+)/', $lastTrx->trx_code, $matches)) {
+        $lastTrx = Transaction::whereDate('created_at', $targetDate->startOfDay())
+            ->where('trx_code', 'like', "{$prefix}-{$dateCode}-%")
+            ->latest()
+            ->first();
+
+        if ($lastTrx && preg_match("/{$prefix}-\d+-(\d+)/", $lastTrx->trx_code, $matches)) {
             $nextNumber = intval($matches[1]) + 1;
         } else {
             $nextNumber = 1;
         }
 
-        return 'TRX-' . $dateCode . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        return $prefix . '-' . $dateCode . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -110,17 +110,28 @@ const menuGroupsRaw = [
                 ],
             },
             {
+                name: 'Administrasi',
+                icon: SettingsIcon,
+                roles: ['owner'],
+                subItems: [
+                    {
+                        name: 'Input Transaksi Lampau',
+                        path: route('transactions.backdate'),
+                        roles: ['owner'],
+                    },
+                    {
+                        name: 'Pengaturan Website',
+                        path: route('settings.index'),
+                        roles: ['owner'],
+                    }
+                ],
+            },
+            {
                 icon: UserGroupIcon,
                 name: 'Kelola Akun Pengguna',
                 path: route('users.index'),
                 roles: ['owner'],
             },
-            {
-                icon: SettingsIcon,
-                name: 'Pengaturan Website',
-                path: route('settings.index'),
-                roles: ['owner'],
-            }
         ],
     },
 ];

@@ -30,7 +30,7 @@
             border-left: 1px solid #9ca3af;
             border-right: 1px solid #9ca3af;
             border-top: 1px solid #d1d5db;
-            border-bottom: none; /* Menyatu ke bawah */
+            border-bottom: none;
             padding: 8px 5px;
             vertical-align: middle;
             background-color: #fff;
@@ -41,55 +41,44 @@
         .bg-header-vol  { background-color: #eff6ff; color: #1e40af; }
         .bg-header-money{ background-color: #f0fdf4; color: #166534; }
         .bg-header-phys { background-color: #fff7ed; color: #9a3412; }
+        .bg-header-backdate { background-color: #fefce8; color: #854d0e; } /* Kuning Backdate */
 
         /* --- 2. CONTAINER DETAIL --- */
         .detail-container {
             width: 100%;
             box-sizing: border-box;
-
-            /* Border Menyatu dengan Summary */
             border-left: 1px solid #9ca3af;
             border-right: 1px solid #9ca3af;
             border-bottom: 2px solid #9ca3af;
             border-top: none;
-
             background-color: #fcfcfc;
-
-            /* REVISI: Padding kiri kanan 0 agar tabel full width */
             padding: 15px 0;
-
             page-break-inside: auto;
         }
 
         /* --- NESTED TABLES --- */
-        /* Judul Tabel Detail */
         .nested-title {
             font-size: 8pt; font-weight: bold; color: #555;
             text-transform: uppercase; display: block;
-            /* Beri padding karena container tidak punya padding */
             padding-left: 10px;
             margin-bottom: 5px; margin-top: 15px;
         }
         .nested-title:first-child { margin-top: 0; }
 
-        /* Tabel Detail */
         .nested-table {
-            width: 100%; /* Full Width */
+            width: 100%;
             border-collapse: collapse;
             background-color: #fff;
             font-size: 8pt;
-
-            /* Border atas bawah saja untuk pemisah */
             border-top: 1px solid #e5e7eb;
             border-bottom: 1px solid #e5e7eb;
-
             margin-bottom: 0;
             page-break-inside: auto;
         }
 
         .nested-table th {
             background-color: #f9fafb; color: #4b5563; font-weight: bold;
-            padding: 6px 10px; /* Padding sel lebih lega */
+            padding: 6px 10px;
             border-bottom: 1px solid #e5e7eb;
             vertical-align: middle;
         }
@@ -103,17 +92,21 @@
             vertical-align: middle;
         }
 
-        /* --- UTILITIES ALIGNMENT --- */
+        /* Style khusus baris backdate di detail */
+        .row-backdate td {
+            background-color: #fefce8; /* Kuning tipis */
+            color: #854d0e;
+        }
+
+        /* --- UTILITIES --- */
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .text-left { text-align: left; }
-
         .font-bold { font-weight: bold; }
         .text-red { color: #dc2626; }
         .text-green { color: #16a34a; }
         .text-blue { color: #2563eb; }
         .bg-audit { background-color: #fffbeb; color: #92400e; font-style: italic; border-bottom: 1px solid #fcd34d; }
-
         .page-break { page-break-after: always; display: block; height: 0; clear: both; }
 
         /* Total Table */
@@ -137,6 +130,7 @@
         $grandOmset = 0;
         $grandDiffLiter = 0;
         $grandDiffCash = 0;
+        $grandBackdate = 0; // Tambah variabel grand total backdate
     @endphp
 
     @foreach($data as $row)
@@ -144,6 +138,7 @@
             $grandOmset += $row['sys_total'];
             $grandDiffLiter += $row['diff_liter'];
             $grandDiffCash += $row['diff_cash'];
+            $grandBackdate += ($row['sys_backdate'] ?? 0);
         @endphp
 
         {{-- WRAPPER PER HARI --}}
@@ -155,17 +150,20 @@
                 <tr>
                     <th rowspan="2" class="bg-header-date text-center" width="10%">Tanggal</th>
                     <th colspan="3" class="bg-header-vol text-center">Volume (Liter)</th>
-                    <th colspan="4" class="bg-header-money text-center">Omset Sistem (Rupiah)</th>
+                    <th colspan="5" class="bg-header-money text-center">Omset Sistem (Rupiah)</th>
                     <th colspan="2" class="bg-header-phys text-center">Realisasi Fisik</th>
                 </tr>
                 <tr>
                     <th class="bg-header-vol text-center" width="8%">Fisik</th>
                     <th class="bg-header-vol text-center" width="8%">Sistem</th>
                     <th class="bg-header-vol text-center" width="8%">Selisih</th>
-                    <th class="bg-header-money text-right" width="9%">Cash</th>
-                    <th class="bg-header-money text-right" width="9%">Trf</th>
-                    <th class="bg-header-money text-right" width="9%">Bon</th>
-                    <th class="bg-header-money text-right" width="11%">Total</th>
+
+                    <th class="bg-header-money text-right" width="8%">Cash</th>
+                    <th class="bg-header-money text-right" width="8%">Trf</th>
+                    <th class="bg-header-money text-right" width="8%">Bon</th>
+                    <th class="bg-header-backdate text-right" width="9%">Backdate</th>
+
+                    <th class="bg-header-money text-right" width="10%">Total</th>
                     <th class="bg-header-phys text-right" width="10%">Uang Laci</th>
                     <th class="bg-header-phys text-center" width="10%">Beda Kas</th>
                 </tr>
@@ -180,9 +178,15 @@
                     <td class="text-center font-bold {{ $row['diff_liter'] != 0 ? ($row['diff_liter'] > 0 ? 'text-blue' : 'text-red') : 'text-green' }}">
                         {{ $row['diff_liter'] > 0 ? '+' : '' }}{{ number_format($row['diff_liter'], 2, ',', '.') }}
                     </td>
+
                     <td class="text-right">{{ number_format($row['sys_cash'], 0, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($row['sys_transfer'], 0, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($row['sys_bon'], 0, ',', '.') }}</td>
+
+                    <td class="text-right" style="color: #854d0e; background-color: #fefce8;">
+                        {{ ($row['sys_backdate'] ?? 0) > 0 ? number_format($row['sys_backdate'], 0, ',', '.') : '-' }}
+                    </td>
+
                     <td class="text-right font-bold">{{ number_format($row['sys_total'], 0, ',', '.') }}</td>
                     <td class="text-right font-bold">{{ number_format($row['phys_cash'], 0, ',', '.') }}</td>
                     <td class="text-center font-bold {{ $row['diff_cash'] < 0 ? 'text-red' : 'text-green' }}">
@@ -243,8 +247,14 @@
                     </thead>
                     <tbody>
                     @forelse($row['transactions'] as $t)
-                        <tr>
-                            <td class="text-center">{{ $t->transaction_date->format('H:i') }}</td>
+                        {{-- Tandai baris jika Backdate --}}
+                        <tr class="{{ $t->is_backdate ? 'row-backdate' : '' }}">
+                            <td class="text-center">
+                                {{ $t->transaction_date->format('H:i') }}
+                                @if($t->is_backdate)
+                                    <br><span style="font-size: 6pt; font-weight:bold; background-color: #fcd34d; padding: 1px 3px; border-radius: 3px;">BKD</span>
+                                @endif
+                            </td>
                             <td class="text-left">
                                 <strong>{{ $t->customer->ship_name ?? 'Umum' }}</strong>
                                 @if(isset($t->customer->owner_name))
@@ -267,11 +277,10 @@
                     </tbody>
                 </table>
 
-            </div> {{-- End Detail Container --}}
+            </div>
 
-        </div> {{-- End Daily Wrapper --}}
+        </div>
 
-        {{-- PAGE BREAK --}}
         @if(!$loop->last)
             <div class="page-break"></div>
         @endif
@@ -286,6 +295,9 @@
                 Selisih Volume: {{ number_format($grandDiffLiter, 2, ',', '.') }} L
             </td>
             <td width="50%" class="text-right">
+                @if($grandBackdate > 0)
+                    <span style="font-size: 8pt; font-weight: normal; margin-right: 10px;">(Backdate: {{ number_format($grandBackdate, 0, ',', '.') }})</span>
+                @endif
                 Total Omset: Rp {{ number_format($grandOmset, 0, ',', '.') }}
             </td>
         </tr>
@@ -295,7 +307,7 @@
         <strong>Catatan Laporan:</strong><br>
         1. Laporan ini menampilkan <strong>Penjualan Bersih (Net Sales)</strong>. Transaksi "Return/Void" tidak dihitung.<br>
         2. Data <strong>Fisik</strong> diambil dari laporan Shift Operator (Totalisator & Uang di Laci).<br>
-        3. Data <strong>Sistem</strong> diambil dari input Transaksi Kasir yang valid (Lunas/Bon).<br>
-        4. Selisih Liter > 5L akan ditandai Merah (Perlu investigasi, kemungkinan kebocoran atau tera ulang).
+        3. Data <strong>Sistem</strong> diambil dari input Transaksi Kasir.<br>
+        4. <strong>Backdate:</strong> Transaksi inputan susulan (lampau). Nilainya tidak dihitung dalam "Beda Kas" harian karena bukan tanggung jawab operator shift hari ini.
     </div>
 @endsection

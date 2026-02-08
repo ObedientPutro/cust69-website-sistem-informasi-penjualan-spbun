@@ -19,7 +19,7 @@ class ReportService
      */
     public function getDailySalesReport(string $start, string $end, ?string $productId = null)
     {
-        // 1. Ambil Data Shift (Fisik / Laci)
+        // 1. Ambil Data Shift (Fisik / Laci / Snapshot Sistem)
         $shifts = PumpShift::with('product')
             ->whereBetween('date', [$start, $end])
             ->where('status', PumpShiftStatusEnum::CLOSED)
@@ -29,7 +29,7 @@ class ReportService
                 return Carbon::parse($item->date)->format('Y-m-d');
             });
 
-        // 2. Ambil Data Transaksi (Sistem)
+        // 2. Ambil Data Transaksi (Sistem Dinamis - Untuk Breakdown Omset)
         $transactions = Transaction::with(['items.product', 'user', 'customer'])
             ->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59'])
             ->when($productId, function($q) use ($productId) {
@@ -50,44 +50,61 @@ class ReportService
             $dayShifts = $shifts->get($dateStr, collect([]));
             $dayTrans  = $transactions->get($dateStr, collect([]));
 
-            // --- A. ANALISA FISIK (SHIFT) ---
-            $totalizerLiter = $dayShifts->sum(function ($s) {
-                return (float) $s->total_sales_liter;
-            });
+            // --- A. ANALISA VOLUME (STRICT SNAPSHOT) ---
+            // Fisik Mesin (Totalisator)
+            $totalizerLiter = $dayShifts->sum(fn($s) => (float) $s->total_sales_liter);
 
-            $physicalCash = $dayShifts->sum(fn($s) => (float) $s->cash_collected);
+            // Sistem Snapshot (Angka sistem saat shift ditutup)
+            $systemLiterSnapshot = $dayShifts->sum(fn($s) => (float) $s->system_transaction_liter);
 
-            // --- B. ANALISA SISTEM ---
+            // Selisih Liter (Berdasarkan snapshot saat itu)
+            $diffLiter = $systemLiterSnapshot - $totalizerLiter;
 
-            // 1. Filter Transaksi Valid DULU (Buang yang Returned)
+
+            // --- B. ANALISA KEUANGAN (DINAMIS & HYBRID) ---
+            // 1. Filter Transaksi Valid (Buang yang Returned)
             $validTrans = $dayTrans->where('payment_status', '!=', PaymentStatusEnum::RETURNED);
 
-            // 2. Liter: HANYA hitung dari validTrans (Agar klop dengan Totalisator yang tidak jalan)
-            $systemLiter = $validTrans->sum(fn($t) => $t->items->sum('quantity_liter'));
-
-            // 3. Uang: Hitung dari validTrans juga
+            // 2. Omset Breakdown (Dinamis - Agar update jika ada edit transaksi)
             $sysCash     = $validTrans->where('payment_method', PaymentMethodEnum::CASH)->sum(fn($t) => (float)$t->grand_total);
             $sysTransfer = $validTrans->where('payment_method', PaymentMethodEnum::TRANSFER)->sum(fn($t) => (float)$t->grand_total);
             $sysBon      = $validTrans->where('payment_method', PaymentMethodEnum::BON)->sum(fn($t) => (float)$t->grand_total);
             $sysTotal    = $sysCash + $sysTransfer + $sysBon;
 
-            // --- C. SELISIH ---
-            $diffLiter = $systemLiter - $totalizerLiter;
-            $diffCash  = $physicalCash - $sysCash;
+            $sysBackdate = $validTrans->where('is_backdate', true)->sum(fn($t) => (float)$t->grand_total);
+
+            $sysCashTarget = $validTrans
+                ->where('payment_method', PaymentMethodEnum::CASH)
+                ->where('is_backdate', false)
+                ->sum(fn($t) => (float)$t->grand_total);
+
+            // 3. Cash Control (Beda Kas)
+            // Uang Fisik: Ambil dari Snapshot Shift (Uang di Laci)
+            $physicalCash = $dayShifts->sum(fn($s) => (float) $s->cash_collected);
+            $diffCash  = $physicalCash - $sysCashTarget;
 
             $report[] = [
                 'date' => $dateStr,
+
+                // Volume Columns (Strict Snapshot)
                 'phys_liter' => $totalizerLiter,
-                'sys_liter'  => $systemLiter,
-                'diff_liter' => $diffLiter,
-                'sys_cash'     => $sysCash,
+                'sys_liter'  => $systemLiterSnapshot, // Menggunakan Snapshot
+                'diff_liter' => $diffLiter,           // Selisih Snapshot
+
+                // Money Columns (Dynamic)
+                'sys_cash'     => $sysCashTarget,
                 'sys_transfer' => $sysTransfer,
                 'sys_bon'      => $sysBon,
-                'sys_total'    => $sysTotal, // Total Uang Bersih
-                'phys_cash' => $physicalCash,
-                'diff_cash' => $diffCash,
+                'sys_total'    => $sysTotal,
+                'sys_backdate' => $sysBackdate,
+
+                // Cash Reconciliation (Hybrid)
+                'phys_cash' => $physicalCash, // Snapshot
+                'diff_cash' => $diffCash,     // Hybrid Calculation
+
+                // Raw Data for Detail View
                 'shifts' => $dayShifts,
-                'transactions' => $dayTrans // Kirim semua data agar bisa diloop di detail (termasuk yg returned)
+                'transactions' => $dayTrans
             ];
         }
 
@@ -119,7 +136,9 @@ class ReportService
 
         $outflow = TransactionItem::with(['transaction.customer', 'product'])
             ->whereHas('transaction', function ($q) use ($start, $end) {
-                $q->valid()->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                $q->valid()
+                    ->whereNotNull('pump_shift_id')
+                    ->whereBetween('transaction_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
             })
             ->when($productId, fn($q) => $q->where('product_id', $productId))
             ->get()

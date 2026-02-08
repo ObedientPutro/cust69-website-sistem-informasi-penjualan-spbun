@@ -18,6 +18,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'trx_code',
+        'is_backdate',
         'user_id',
         'customer_id',
         'pump_shift_id',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Transaction;
 
 use App\Enums\ShipTypeEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Transaction\StoreBackdateTransactionRequest;
 use App\Http\Requests\Transaction\StoreTransactionRequest;
 use App\Http\Requests\Transaction\UpdateTransactionRequest;
 use App\Models\Customer;
@@ -133,5 +134,47 @@ class TransactionController extends Controller
     {
         $pdf = $this->transactionService->generateReceiptPdf($transaction);
         return $pdf->stream("Struk_{$transaction->trx_code}.pdf");
+    }
+
+    /**
+     * Show Form Backdate (Owner Only)
+     */
+    public function createBackdate()
+    {
+        $products = Product::where('is_active', true)
+            ->select('id', 'name', 'price', 'unit', 'stock')
+            ->get();
+
+        $customers = Customer::where('is_active', true)
+            ->orderBy('manager_name')
+            ->get();
+
+        return Inertia::render('Transaction/CreateBackdate', [
+            'products' => $products,
+            'customers' => $customers,
+            'shipTypes' => ShipTypeEnum::toArray(),
+        ]);
+    }
+
+    /**
+     * Store Backdate Transaction
+     */
+    public function storeBackdate(StoreBackdateTransactionRequest $request)
+    {
+        try {
+            $this->transactionService->createBackdateTransaction(
+                $request->validated(),
+                $request->file('payment_proof')
+            );
+
+            return redirect()->route('history.transactions.index')
+                ->with('success', 'Transaksi Lampau berhasil dicatat secara administratif.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menyimpan transaksi backdate: ' . $e->getMessage());
+        }
     }
 }
