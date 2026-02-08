@@ -41,7 +41,7 @@ class Customer extends Model
     {
         return $this->photo
             ? Storage::url($this->photo)
-            : 'https://ui-avatars.com/api/?name=' . urlencode($this->owner_name) . '&color=F97316&background=FFF7ED';
+            : 'https://ui-avatars.com/api/?name=' . urlencode($this->ship_name) . '&color=F97316&background=FFF7ED';
     }
 
     public function getUsedCreditAttribute(): float
