@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
-import { ref, watch } from 'vue';
+import { ref, watch, computed} from 'vue';
 
 const props = withDefaults(defineProps<{
     rows: any[];
@@ -65,6 +65,9 @@ const refreshTable = (params: object) => {
         { preserveState: true, replace: true, preserveScroll: true },
     );
 };
+
+const prevLink = computed(() => props.pagination?.links?.[0]);
+const nextLink = computed(() => props.pagination?.links?.[props.pagination.links.length - 1]);
 </script>
 
 <template>
@@ -159,28 +162,73 @@ const refreshTable = (params: object) => {
         </div>
 
         <div
-            v-if="pagination && pagination.links && pagination.links.length > 3"
-            class="flex flex-col items-center justify-between gap-3 border-t border-gray-200 px-5 py-4 sm:flex-row dark:border-gray-700"
+            v-if="pagination && pagination.links.length > 3"
+            class="border-t border-gray-200 px-5 py-4 dark:border-gray-700"
         >
-            <div class="text-sm text-gray-500 dark:text-gray-400">
-                Showing {{ pagination.from }} to {{ pagination.to }} of
-                {{ pagination.total }} entries
-            </div>
-            <div class="flex flex-wrap justify-center gap-1">
+            <div class="flex items-center justify-between sm:hidden">
                 <button
-                    v-for="(link, i) in pagination.links"
-                    :key="i"
-                    @click="changePage(link.url)"
-                    :disabled="!link.url || link.active"
-                    v-html="link.label"
-                    class="rounded border px-3 py-1 text-sm transition"
-                    :class="[
-                        link.active
-                            ? 'bg-brand-500 border-brand-500 text-white'
-                            : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700',
-                        !link.url ? 'cursor-not-allowed opacity-50' : '',
-                    ]"
-                ></button>
+                    @click="changePage(prevLink?.url)"
+                    :disabled="!prevLink?.url"
+                    class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                    Previous
+                </button>
+
+                <span class="text-sm text-gray-700 dark:text-gray-300">
+                    Page {{ pagination.current_page }} of {{ pagination.last_page }}
+                </span>
+
+                <button
+                    @click="changePage(nextLink?.url)"
+                    :disabled="!nextLink?.url"
+                    class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                    Next
+                </button>
+            </div>
+
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700 dark:text-gray-400">
+                        Showing
+                        <span class="font-medium text-gray-900 dark:text-white">{{ pagination.from }}</span>
+                        to
+                        <span class="font-medium text-gray-900 dark:text-white">{{ pagination.to }}</span>
+                        of
+                        <span class="font-medium text-gray-900 dark:text-white">{{ pagination.total }}</span>
+                        entries
+                    </p>
+                </div>
+                <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md" aria-label="Pagination">
+                        <template v-for="(link, i) in pagination.links" :key="i">
+
+                            <button
+                                v-if="link.url || link.label !== '...'"
+                                @click="changePage(link.url)"
+                                :disabled="!link.url || link.active"
+                                class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0 border transition-colors"
+                                :class="[
+                                    link.active
+                                        ? 'z-10 bg-brand-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 border-brand-600'
+                                        : 'text-gray-900 hover:bg-gray-50 focus:outline-offset-0 dark:text-gray-200 dark:hover:bg-gray-700 dark:bg-gray-800',
+                                    !link.url ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+                                    i === 0 ? 'rounded-l-md' : '',
+                                    i === pagination.links.length - 1 ? 'rounded-r-md' : ''
+                                ]"
+                                v-html="link.label"
+                            ></button>
+
+                            <span
+                                v-else
+                                class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 focus:outline-offset-0 dark:text-gray-400 dark:bg-gray-800"
+                            >
+                                ...
+                            </span>
+
+                        </template>
+                    </nav>
+                </div>
             </div>
         </div>
     </div>

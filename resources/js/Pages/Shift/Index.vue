@@ -9,6 +9,7 @@ import TextInput from '@/Components/FormElements/TextInput.vue';
 import TextArea from '@/Components/FormElements/TextArea.vue';
 import SelectInput from '@/Components/FormElements/SelectInput.vue';
 import DatePicker from '@/Components/FormElements/DatePicker.vue';
+import ImageViewerModal from '@/Components/Ui/ImageViewerModal.vue';
 import FileDropzone from '@/Components/FormElements/FileDropzone.vue';
 import Badge from '@/Components/Ui/Badge.vue';
 import Modal from '@/Components/Ui/Modal.vue';
@@ -31,10 +32,9 @@ const columns = [
     { label: 'Waktu / Tanggal', key: 'opened_at', sortable: true, align: 'left' },
     { label: 'Produk', key: 'product', sortable: false, align: 'center' },
     { label: 'Petugas', key: 'opener', sortable: false, align: 'left' },
-    { label: 'Meteran', key: 'totalizers', sortable: false, align: 'left' },
+    { label: 'Meteran', key: 'totalizers', sortable: false, align: 'right' },
     { label: 'Rekonsiliasi (Fisik vs Sys)', key: 'reconciliation', sortable: false, align: 'center' },
     { label: 'Status', key: 'status', sortable: true, align: 'center' },
-    { label: 'Aksi', key: 'actions', sortable: false, align: 'center' },
 ];
 
 const filterForm = ref({
@@ -149,6 +149,16 @@ const openNoteModal = (row: any) => {
     isNoteModalVisible.value = true;
 };
 
+const isViewerOpen = ref(false);
+const viewerUrl = ref<string>('');
+const viewerAlt = ref<string>('');
+
+const openProofViewer = (url: string, title: string) => {
+    viewerUrl.value = url;
+    viewerAlt.value = title;
+    isViewerOpen.value = true;
+};
+
 // --- HELPER ---
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('id-ID', {
@@ -244,7 +254,33 @@ const formatNumber = (num: number | string) => {
             <h3 class="text-lg font-bold text-gray-800 dark:text-white">Riwayat Aktivitas Shift</h3>
         </div>
 
-        <DataTable :rows="history.data" :columns="columns" :pagination="history" :filters="filters" :enable-actions="false">
+        <DataTable
+            :rows="history.data"
+            :columns="columns"
+            :pagination="history"
+            :filters="filters"
+            :searchInfo="'Cari Operator, Petugas & Status'"
+        >
+            <template #filters>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 w-full">
+                    <div class="md:col-span-4">
+                        <DatePicker v-model="filterForm.start_date" placeholder="Dari Tanggal" />
+                    </div>
+                    <div class="md:col-span-4">
+                        <DatePicker v-model="filterForm.end_date" placeholder="Sampai Tanggal" />
+                    </div>
+
+                    <div class="md:col-span-4">
+                        <SelectInput v-model="filterForm.product_id">
+                            <option value="">Semua Produk BBM</option>
+                            <option v-for="p in products" :key="p.id" :value="p.id">
+                                {{ p.name }}
+                            </option>
+                        </SelectInput>
+                    </div>
+                </div>
+            </template>
+
             <template #cell-opened_at="{ row }">
                 <div class="text-sm">
                     <span class="block font-medium text-gray-800 dark:text-white">{{ formatDate(row.opened_at) }}</span>
@@ -262,9 +298,37 @@ const formatNumber = (num: number | string) => {
             </template>
 
             <template #cell-totalizers="{ row }">
-                <div class="text-xs text-right text-gray-700 dark:text-gray-300">
-                    <div><span class="text-gray-400">Aw:</span> <span class="font-mono">{{ formatNumber(row.opening_totalizer) }}</span></div>
-                    <div v-if="row.closing_totalizer"><span class="text-gray-400">Ak:</span> <span class="font-mono">{{ formatNumber(row.closing_totalizer) }}</span></div>
+                <div class="text-xs text-right text-gray-700 dark:text-gray-300 space-y-1">
+
+                    <div class="flex items-center justify-end gap-2">
+                        <button
+                            v-if="row.opening_proof_url"
+                            @click.stop="openProofViewer(row.opening_proof_url, 'Bukti Meteran Awal')"
+                            class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition"
+                            title="Lihat Foto Awal"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </button>
+                        <div>
+                            <span class="text-gray-400">Aw:</span>
+                            <span class="font-mono font-medium">{{ formatNumber(row.opening_totalizer) }}</span>
+                        </div>
+                    </div>
+
+                    <div v-if="row.closing_totalizer" class="flex items-center justify-end gap-2">
+                        <button
+                            v-if="row.closing_proof_url"
+                            @click.stop="openProofViewer(row.closing_proof_url, 'Bukti Meteran Akhir')"
+                            class="text-green-500 hover:text-green-600 dark:text-green-400 dark:hover:text-green-300 transition"
+                            title="Lihat Foto Akhir"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </button>
+                        <div>
+                            <span class="text-gray-400">Ak:</span>
+                            <span class="font-mono font-medium">{{ formatNumber(row.closing_totalizer) }}</span>
+                        </div>
+                    </div>
                 </div>
             </template>
 
@@ -318,7 +382,7 @@ const formatNumber = (num: number | string) => {
                 </div>
             </template>
 
-            <template #cell-actions="{ row }">
+            <template #actions-row="{ row }">
                 <Button
                     v-if="isOwner && needsAudit(row)"
                     variant="danger"
@@ -326,7 +390,7 @@ const formatNumber = (num: number | string) => {
                     class="whitespace-nowrap"
                     size="sm"
                 >
-                    ⚠ Audit Sekarang
+                    ⚠ Audit
                 </Button>
                 <button
                     v-if="row.is_audited"
@@ -445,6 +509,13 @@ const formatNumber = (num: number | string) => {
                 </form>
             </div>
         </Modal>
+
+        <ImageViewerModal
+            :show="isViewerOpen"
+            :image-src="viewerUrl"
+            :alt-text="viewerAlt"
+            @close="isViewerOpen = false"
+        />
 
     </AdminLayout>
 </template>
