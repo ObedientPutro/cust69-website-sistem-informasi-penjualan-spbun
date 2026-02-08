@@ -337,7 +337,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
         <Modal :show="isEditModalOpen" title="Edit Transaksi (Owner)" @close="isEditModalOpen = false">
             <form @submit.prevent="submitEdit" class="space-y-4">
                 <div v-for="(item, index) in editForm.items" :key="index" class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
-                    <div class="flex justify-between text-sm font-bold mb-2">
+                    <div class="flex justify-between text-sm font-bold mb-2 text-gray-800 dark:text-white">
                         <span>{{ products.find(p => p.id == item.product_id)?.name || 'Produk' }}</span>
                     </div>
                     <IntegerInput

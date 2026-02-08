@@ -158,14 +158,9 @@ const formatDate = (dateString: string) => {
 
 const formatNumber = (num: number | string) => {
     if (num === null || num === undefined || num === '') return '-';
-
-    // 1. Pastikan nilai adalah angka float
     const value = typeof num === 'string' ? parseFloat(num) : num;
-
-    // 2. Format ID tanpa pemisah ribuan (useGrouping: false)
-    // Contoh: 12345.50 -> "12345,50"
     return new Intl.NumberFormat('id-ID', {
-        useGrouping: false // <--- INI KUNCINYA (Matikan Titik Ribuan)
+        useGrouping: false
     }).format(value);
 };
 </script>
@@ -261,13 +256,13 @@ const formatNumber = (num: number | string) => {
 
             <template #cell-opener="{ row }">
                 <div class="flex flex-col text-xs gap-1">
-                    <div class="flex items-center gap-1"><span class="w-8 text-gray-400">Buka:</span><span class="font-medium">{{ row.opener?.name }}</span></div>
-                    <div v-if="row.closer" class="flex items-center gap-1"><span class="w-8 text-gray-400">Tutup:</span><span class="font-medium">{{ row.closer?.name }}</span></div>
+                    <div class="flex items-center gap-1"><span class="w-8 text-gray-400">Buka:</span><span class="font-medium text-gray-700 dark:text-gray-300">{{ row.opener?.name }}</span></div>
+                    <div v-if="row.closer" class="flex items-center gap-1"><span class="w-8 text-gray-400">Tutup:</span><span class="font-medium text-gray-700 dark:text-gray-300">{{ row.closer?.name }}</span></div>
                 </div>
             </template>
 
             <template #cell-totalizers="{ row }">
-                <div class="text-xs text-right">
+                <div class="text-xs text-right text-gray-700 dark:text-gray-300">
                     <div><span class="text-gray-400">Aw:</span> <span class="font-mono">{{ formatNumber(row.opening_totalizer) }}</span></div>
                     <div v-if="row.closing_totalizer"><span class="text-gray-400">Ak:</span> <span class="font-mono">{{ formatNumber(row.closing_totalizer) }}</span></div>
                 </div>
@@ -284,21 +279,21 @@ const formatNumber = (num: number | string) => {
                             </span>
                         </div>
 
-                        <span class="text-gray-300 mx-1">vs</span>
+                        <span class="text-gray-300 dark:text-gray-600 mx-1">vs</span>
 
                         <div class="flex flex-col items-end">
                             <span class="text-[10px] text-gray-400 uppercase font-bold">Sistem (POS)</span>
-                            <span class="font-bold text-blue-600">
+                            <span class="font-bold text-blue-600 dark:text-blue-400">
                                 {{ formatNumber(row.system_transaction_liter) }}
                             </span>
                         </div>
                     </div>
 
                     <div v-if="Math.abs(getDiff(row)) > 1" class="w-full text-center">
-                        <div class="inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-bold w-full justify-center"
+                        <div class="inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-bold w-full justify-center transition-colors"
                              :class="getDiff(row) > 0
-                                ? 'bg-orange-50 text-orange-700 border-orange-200'
-                                : 'bg-red-50 text-red-700 border-red-200'">
+                                ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20'
+                                : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'">
 
                             <span v-if="getDiff(row) > 0">⚠ Lebih: {{ formatNumber(getDiff(row)) }} L</span>
                             <span v-else>⚠ Kurang: {{ formatNumber(Math.abs(getDiff(row))) }} L</span>
@@ -306,7 +301,7 @@ const formatNumber = (num: number | string) => {
                     </div>
 
                     <div v-else class="w-full text-center">
-                        <div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-50 border border-green-200 text-green-700 text-xs font-bold w-full justify-center">
+                        <div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-50 border border-green-200 text-green-700 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20 text-xs font-bold w-full justify-center transition-colors">
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             Match
                         </div>
@@ -329,13 +324,14 @@ const formatNumber = (num: number | string) => {
                     variant="danger"
                     @click="openAuditModal(row)"
                     class="whitespace-nowrap"
+                    size="sm"
                 >
                     ⚠ Audit Sekarang
                 </Button>
                 <button
                     v-if="row.is_audited"
                     @click="openNoteModal(row)"
-                    class="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition"
+                    class="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 dark:hover:bg-blue-500/20"
                     title="Lihat Catatan Audit"
                 >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -346,19 +342,19 @@ const formatNumber = (num: number | string) => {
 
         <Modal :show="isNoteModalVisible" title="Catatan Audit Owner" @close="isNoteModalVisible = false" maxWidth="md">
             <div class="space-y-4">
-                <div class="bg-gray-50 p-3 rounded-lg border dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                     <p class="text-xs text-gray-500 uppercase font-bold">Shift</p>
                     <p class="font-medium text-gray-800 dark:text-white">{{ selectedShiftInfo }}</p>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Isi Catatan:</label>
-                    <div class="p-4 bg-yellow-50 text-yellow-900 rounded-xl border border-yellow-200 text-sm leading-relaxed whitespace-pre-wrap dark:bg-yellow-900/20 dark:text-yellow-100 dark:border-yellow-800">
+                    <div class="p-4 bg-yellow-50 text-yellow-900 rounded-xl border border-yellow-200 text-sm leading-relaxed whitespace-pre-wrap dark:bg-yellow-900/10 dark:text-yellow-200 dark:border-yellow-800/30">
                         {{ selectedNote }}
                     </div>
                 </div>
 
-                <div class="flex justify-end pt-2">
+                <div class="flex justify-end pt-2 border-t dark:border-gray-700">
                     <Button type="button" variant="outline" @click="isNoteModalVisible = false">Tutup</Button>
                 </div>
             </div>
@@ -366,7 +362,7 @@ const formatNumber = (num: number | string) => {
 
         <Modal :show="isOpenModalVisible" title="Buka Shift Operasional" @close="isOpenModalVisible = false">
             <form @submit.prevent="submitOpen" class="space-y-4">
-                <div class="bg-blue-50 p-4 rounded-xl mb-4 dark:bg-blue-900/20">
+                <div class="bg-blue-50 p-4 rounded-xl mb-4 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
                     <p class="text-sm text-blue-800 dark:text-blue-300">
                         Anda akan membuka shift untuk produk: <br>
                         <span class="font-bold text-lg">{{ selectedProduct?.name }}</span>
@@ -383,7 +379,7 @@ const formatNumber = (num: number | string) => {
 
         <Modal :show="isCloseModalVisible" title="Tutup Shift (Closing)" @close="isCloseModalVisible = false">
             <form @submit.prevent="submitClose" class="space-y-4">
-                <div class="bg-orange-50 p-4 rounded-xl mb-4 dark:bg-orange-900/20">
+                <div class="bg-orange-50 p-4 rounded-xl mb-4 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800">
                     <p class="text-sm text-orange-800 dark:text-orange-300">
                         Menutup shift untuk: <strong>{{ selectedProduct?.name }}</strong><br>
                         Meter Awal: <span class="font-mono">{{ selectedShift?.opening_totalizer }}</span>
@@ -418,17 +414,17 @@ const formatNumber = (num: number | string) => {
                     <h4 class="font-bold text-red-800 dark:text-red-300 mb-2">Terdeteksi Selisih Volume!</h4>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span class="block text-gray-500">Penjualan Fisik (Mesin):</span>
+                            <span class="block text-gray-500 dark:text-gray-400">Penjualan Fisik (Mesin):</span>
                             <span class="font-mono font-bold text-gray-800 dark:text-white text-lg">{{ formatNumber(shiftToAudit.total_sales_liter) }} L</span>
                         </div>
                         <div>
-                            <span class="block text-gray-500">Tercatat di Sistem:</span>
-                            <span class="font-mono font-bold text-blue-600 text-lg">{{ formatNumber(shiftToAudit.system_transaction_liter) }} L</span>
+                            <span class="block text-gray-500 dark:text-gray-400">Tercatat di Sistem:</span>
+                            <span class="font-mono font-bold text-blue-600 dark:text-blue-400 text-lg">{{ formatNumber(shiftToAudit.system_transaction_liter) }} L</span>
                         </div>
                     </div>
                     <div class="mt-3 pt-3 border-t border-red-200 dark:border-red-700 flex justify-between items-center">
-                        <span class="text-red-700 font-bold">Total Selisih:</span>
-                        <span class="text-xl font-black text-red-600">{{ formatNumber(getDiff(shiftToAudit)) }} Liter</span>
+                        <span class="text-red-700 dark:text-red-300 font-bold">Total Selisih:</span>
+                        <span class="text-xl font-black text-red-600 dark:text-red-400">{{ formatNumber(getDiff(shiftToAudit)) }} Liter</span>
                     </div>
                 </div>
 
@@ -442,7 +438,7 @@ const formatNumber = (num: number | string) => {
                         :error="auditForm.errors.owner_note"
                     />
 
-                    <div class="flex justify-end gap-3 pt-2">
+                    <div class="flex justify-end gap-3 pt-2 border-t dark:border-gray-700">
                         <Button type="button" variant="outline" @click="isAuditModalVisible = false">Batal</Button>
                         <Button type="submit" variant="primary" :processing="auditForm.processing">Simpan & Selesaikan Audit</Button>
                     </div>

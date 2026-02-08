@@ -50,7 +50,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
         <div class="mb-6 flex flex-col xl:flex-row justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Laporan Laba Rugi (Gross Profit)</h2>
-                <p class="text-sm text-gray-500">Analisis keuntungan kotor berdasarkan selisih Harga Jual dan HPP.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Analisis keuntungan kotor berdasarkan selisih Harga Jual dan HPP.</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
@@ -78,13 +78,13 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2- xl:grid-cols-3 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
             <MetricCard title="Total Omset" :value="formatRupiah(totals.omzet)" color="primary" :icon="PieChartIcon" />
             <MetricCard title="Total HPP (Modal)" :value="formatRupiah(totals.hpp)" color="warning" :icon="BarChartIcon" />
             <MetricCard title="Laba Kotor" :value="formatRupiah(totals.profit)" color="success" :icon="InfoCircleIcon" />
         </div>
 
-        <div class="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+        <div class="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden shadow-sm">
             <table class="w-full text-left text-sm">
                 <thead class="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
                 <tr>
@@ -95,22 +95,22 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <tr v-for="(row, idx) in data" :key="idx" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td class="px-6 py-3">{{ formatDate(row.date) }}</td>
-                    <td class="px-6 py-3 text-right">{{ formatRupiah(row.omzet) }}</td>
-                    <td class="px-6 py-3 text-right text-red-500">({{ formatRupiah(row.hpp) }})</td>
-                    <td class="px-6 py-3 text-right font-bold text-green-600">{{ formatRupiah(row.gross_profit) }}</td>
+                <tr v-for="(row, idx) in data" :key="idx" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <td class="px-6 py-3 text-gray-700 dark:text-gray-300">{{ formatDate(row.date) }}</td>
+                    <td class="px-6 py-3 text-right text-gray-900 dark:text-white">{{ formatRupiah(row.omzet) }}</td>
+                    <td class="px-6 py-3 text-right text-red-500 dark:text-red-400">({{ formatRupiah(row.hpp) }})</td>
+                    <td class="px-6 py-3 text-right font-bold text-green-600 dark:text-green-400">{{ formatRupiah(row.gross_profit) }}</td>
                 </tr>
                 <tr v-if="data.length === 0">
-                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">Tidak ada data pada periode ini.</td>
+                    <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 italic">Tidak ada data pada periode ini.</td>
                 </tr>
                 </tbody>
-                <tfoot v-if="data.length > 0" class="bg-gray-50 dark:bg-gray-800 font-bold border-t dark:border-gray-700">
+                <tfoot v-if="data.length > 0" class="bg-gray-50 dark:bg-gray-800 font-bold border-t dark:border-gray-700 text-gray-900 dark:text-white">
                 <tr>
                     <td class="px-6 py-3">TOTAL</td>
                     <td class="px-6 py-3 text-right">{{ formatRupiah(totals.omzet) }}</td>
-                    <td class="px-6 py-3 text-right text-red-600">({{ formatRupiah(totals.hpp) }})</td>
-                    <td class="px-6 py-3 text-right text-green-600">{{ formatRupiah(totals.profit) }}</td>
+                    <td class="px-6 py-3 text-right text-red-500 dark:text-red-400">({{ formatRupiah(totals.hpp) }})</td>
+                    <td class="px-6 py-3 text-right text-green-600 dark:text-green-400">{{ formatRupiah(totals.profit) }}</td>
                 </tr>
                 </tfoot>
             </table>

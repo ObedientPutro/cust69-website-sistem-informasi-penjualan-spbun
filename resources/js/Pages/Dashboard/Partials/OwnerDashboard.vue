@@ -4,6 +4,7 @@ import ChartCard from '@/Components/Metrics/ChartCard.vue';
 import AreaChart from '@/Components/Metrics/AreaChart.vue';
 import DonutChart from '@/Components/Metrics/DonutChart.vue';
 import Badge from '@/Components/Ui/Badge.vue';
+import DataTable from '@/Components/Tables/DataTable.vue'; // Gunakan Component DataTable
 
 const props = defineProps<{
     metrics: any;
@@ -38,13 +39,29 @@ const getStockStatusClass = (status: string) => {
 
 const getStockIcon = (status: string) => {
     if (status === 'empty' || status === 'critical') {
-        return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'; // Warning Triangle
+        return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z';
     } else if (status === 'warning') {
-        return 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'; // Clock
+        return 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z';
     } else {
-        return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'; // Check Circle
+        return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
     }
 };
+
+// --- CONFIG TABEL ---
+// Kolom untuk Top Debtor
+const debtorsColumns = [
+    { label: 'Nama Kapal / Pemilik', key: 'identity', align: 'left' },
+    { label: 'Total Hutang', key: 'total_debt', align: 'left' },
+    { label: 'Frekuensi', key: 'bon_count', align: 'center' },
+];
+
+// Kolom untuk Recent Transactions
+const transactionsColumns = [
+    { label: 'Kapal / Pelanggan', key: 'customer', align: 'left' },
+    { label: 'Produk', key: 'items', align: 'left' },
+    { label: 'Total', key: 'total', align: 'left' },
+    { label: 'Status', key: 'status', align: 'center' },
+];
 </script>
 
 <template>
@@ -158,67 +175,70 @@ const getStockIcon = (status: string) => {
                     />
                 </ChartCard>
 
-                <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center px-1">
                         <h3 class="text-lg font-bold text-gray-800 dark:text-white">Top 5 Piutang Tertinggi</h3>
-                        <Link :href="route('debts.index')" class="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 dark:bg-gray-800">Kelola Piutang</Link>
+                        <Link :href="route('debts.index')" class="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">Kelola Piutang</Link>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                            <tr class="text-gray-500 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                                <th class="py-3 px-4 rounded-tl-lg">Nama Kapal / Pemilik</th>
-                                <th class="py-3 px-4">Total Hutang</th>
-                                <th class="py-3 px-4 text-center rounded-tr-lg">Frekuensi</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="(debtor, idx) in lists.debtors" :key="idx" class="border-b last:border-0 dark:border-gray-800">
-                                <td class="py-3 px-4">
-                                    <p class="font-bold text-gray-800 dark:text-white text-base">{{ debtor.ship_name }}</p>
-                                    <p class="text-xs text-gray-500">{{ debtor.owner_name }}</p>
-                                </td>
-                                <td class="py-3 px-4 font-mono font-bold text-red-500">{{ formatRupiah(debtor.total_debt) }}</td>
-                                <td class="py-3 px-4 text-center"><span class="bg-gray-100 px-2 py-1 rounded text-xs text-gray-600">{{ debtor.bon_count }}x</span></td>
-                            </tr>
-                            <tr v-if="lists.debtors.length === 0"><td colspan="3" class="text-center py-4 text-gray-500">Tidak ada piutang.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                    <DataTable
+                        :rows="lists.debtors"
+                        :columns="debtorsColumns"
+                        :enableActions="false"
+                        :enableSearch="false"
+                    >
+                        <template #cell-identity="{ row }">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-800 dark:text-white text-base">{{ row.ship_name }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ row.owner_name }}</span>
+                            </div>
+                        </template>
+
+                        <template #cell-total_debt="{ row }">
+                            <span class="font-mono font-bold text-red-500">{{ formatRupiah(row.total_debt) }}</span>
+                        </template>
+
+                        <template #cell-bon_count="{ row }">
+                            <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs text-gray-600 dark:text-gray-300">{{ row.bon_count }}x</span>
+                        </template>
+                    </DataTable>
                 </div>
 
-                <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center px-1">
                         <h3 class="text-lg font-bold text-gray-800 dark:text-white">Transaksi Terakhir</h3>
-                        <Link :href="route('history.transactions.index')" class="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 dark:bg-gray-800">Lihat Semua</Link>
+                        <Link :href="route('history.transactions.index')" class="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">Lihat Semua</Link>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                            <tr class="text-gray-500 border-b dark:border-gray-700">
-                                <th class="pb-2 font-medium">Kapal / Pelanggan</th>
-                                <th class="pb-2 font-medium">Produk</th>
-                                <th class="pb-2 font-medium">Total</th>
-                                <th class="pb-2 font-medium text-center">Status</th>
-                            </tr>
-                            </thead>
-                            <tbody class="divide-y dark:divide-gray-800">
-                            <tr v-for="trx in lists.recent_transactions" :key="trx.id">
-                                <td class="py-3">
-                                    <p class="font-bold text-gray-800 dark:text-white text-base">
-                                        {{ trx.ship_name ?? trx.customer }}
-                                    </p>
-                                    <p v-if="trx.owner_name" class="text-xs text-gray-500">{{ trx.owner_name }}</p>
-                                </td>
-                                <td class="py-3 font-medium">{{ trx.items }}</td>
-                                <td class="py-3 font-mono font-medium">{{ formatRupiah(trx.total) }}</td>
-                                <td class="py-3 text-center">
-                                    <Badge :color="trx.status === 'paid' ? 'success' : (trx.status === 'returned' ? 'error' : 'warning')" size="sm">{{ trx.status }}</Badge>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                    <DataTable
+                        :rows="lists.recent_transactions"
+                        :columns="transactionsColumns"
+                        :enableActions="false"
+                        :enableSearch="false"
+                    >
+                        <template #cell-customer="{ row }">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-800 dark:text-white text-sm">
+                                    {{ row.ship_name ?? row.customer }}
+                                </span>
+                                <span v-if="row.owner_name" class="text-xs text-gray-500 dark:text-gray-400">{{ row.owner_name }}</span>
+                            </div>
+                        </template>
+
+                        <template #cell-items="{ row }">
+                            <span class="font-medium text-gray-600 dark:text-gray-300">{{ row.items }}</span>
+                        </template>
+
+                        <template #cell-total="{ row }">
+                            <span class="font-mono font-medium text-gray-800 dark:text-white">{{ formatRupiah(row.total) }}</span>
+                        </template>
+
+                        <template #cell-status="{ row }">
+                            <Badge :color="row.status === 'paid' ? 'success' : (row.status === 'returned' ? 'error' : 'warning')" size="sm">
+                                {{ row.status }}
+                            </Badge>
+                        </template>
+                    </DataTable>
                 </div>
             </div>
 
@@ -277,7 +297,7 @@ const getStockIcon = (status: string) => {
                                 </div>
                             </div>
 
-                            <div class="p-2 rounded-full bg-white/50 backdrop-blur-sm">
+                            <div class="p-2 rounded-full bg-white/50 backdrop-blur-sm dark:bg-black/20">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getStockIcon(item.status)" />
                                 </svg>
@@ -289,18 +309,18 @@ const getStockIcon = (status: string) => {
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-gray-800 dark:text-white">Shift Aktif</h3>
-                        <Link :href="route('shifts.index')" class="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">Lihat</Link>
+                        <Link :href="route('shifts.index')" class="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">Lihat</Link>
                     </div>
                     <div v-if="active_shifts.length > 0" class="space-y-3">
-                        <div v-for="(shift, idx) in active_shifts" :key="idx" class="flex items-center justify-between bg-green-50 p-3 rounded-lg border border-green-100">
+                        <div v-for="(shift, idx) in active_shifts" :key="idx" class="flex items-center justify-between bg-green-50 p-3 rounded-lg border border-green-100 dark:bg-green-900/10 dark:border-green-800">
                             <div>
-                                <p class="text-sm font-bold text-gray-800">{{ shift.product_name }}</p>
-                                <p class="text-xs text-green-700">{{ shift.opener_name }}</p>
+                                <p class="text-sm font-bold text-gray-800 dark:text-white">{{ shift.product_name }}</p>
+                                <p class="text-xs text-green-700 dark:text-green-400">{{ shift.opener_name }}</p>
                             </div>
-                            <span class="text-xs font-mono text-gray-500">{{ shift.opened_at_time }}</span>
+                            <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ shift.opened_at_time }}</span>
                         </div>
                     </div>
-                    <div v-else class="text-center py-4 text-gray-400 text-sm">Tidak ada shift terbuka.</div>
+                    <div v-else class="text-center py-4 text-gray-400 text-sm italic">Tidak ada shift terbuka.</div>
                 </div>
 
             </div>

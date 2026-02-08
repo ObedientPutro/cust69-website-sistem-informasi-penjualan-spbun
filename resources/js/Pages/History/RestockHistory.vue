@@ -122,10 +122,10 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', 
                         <div class="w-36"><DatePicker v-model="filterForm.start_date" placeholder="Start" /></div>
                         <div class="w-36"><DatePicker v-model="filterForm.end_date" placeholder="End" /></div>
                         <div class="w-48">
-                            <select v-model="filterForm.product_id" class="w-full rounded-lg border-gray-300 bg-transparent py-2.5 px-4 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900">
+                            <SelectInput v-model="filterForm.product_id" class="text-sm">
                                 <option value="">Semua Produk</option>
                                 <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                            </select>
+                            </SelectInput>
                         </div>
                     </div>
                     <div v-if="isOwner" class="flex gap-2">

@@ -54,7 +54,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
         <div class="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">Laporan Arus Stok (Stock Flow)</h2>
-                <p class="text-sm text-gray-500">Mutasi barang masuk (Restock) dan keluar (Penjualan).</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Mutasi barang masuk (Restock) dan keluar (Penjualan).</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
@@ -112,15 +112,15 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
         <div class="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700 uppercase text-xs text-gray-500 font-semibold">
+                    <thead class="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700 uppercase text-xs text-gray-500 dark:text-gray-400 font-semibold">
                     <tr>
                         <th class="px-6 py-4">Waktu</th>
                         <th class="px-6 py-4">Tipe Mutasi</th>
                         <th class="px-6 py-4">Produk</th>
                         <th class="px-6 py-4">Pelanggan</th>
                         <th class="px-6 py-4">Referensi</th>
-                        <th class="px-6 py-4 text-center text-green-600 bg-green-50 dark:bg-green-900/10">Masuk</th>
-                        <th class="px-6 py-4 text-center text-orange-600 bg-orange-50 dark:bg-orange-900/10">Keluar</th>
+                        <th class="px-6 py-4 text-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10">Masuk</th>
+                        <th class="px-6 py-4 text-center text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/10">Keluar</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -139,32 +139,32 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                         <td class="px-6 py-4 font-bold text-gray-800 dark:text-white">
                             {{ row.product_name }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
                             {{ row.customer_name }}
                         </td>
-                        <td class="px-6 py-4 font-mono text-xs text-gray-500">
+                        <td class="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">
                             {{ row.ref }}
                         </td>
                         <td class="px-6 py-4 text-center bg-green-50/30 dark:bg-green-900/5">
-                            <span v-if="row.qty_in > 0" class="font-bold text-green-600">+{{ row.qty_in }}</span>
-                            <span v-else class="text-gray-300">-</span>
+                            <span v-if="row.qty_in > 0" class="font-bold text-green-600 dark:text-green-400">+{{ row.qty_in }}</span>
+                            <span v-else class="text-gray-300 dark:text-gray-600">-</span>
                         </td>
                         <td class="px-6 py-4 text-center bg-orange-50/30 dark:bg-orange-900/5">
-                            <span v-if="row.qty_out > 0" class="font-bold text-orange-600">-{{ row.qty_out }}</span>
-                            <span v-else class="text-gray-300">-</span>
+                            <span v-if="row.qty_out > 0" class="font-bold text-orange-600 dark:text-orange-400">-{{ row.qty_out }}</span>
+                            <span v-else class="text-gray-300 dark:text-gray-600">-</span>
                         </td>
                     </tr>
                     <tr v-if="data.length === 0">
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 italic">
                             Tidak ada pergerakan stok pada periode ini.
                         </td>
                     </tr>
                     </tbody>
-                    <tfoot v-if="data.length > 0" class="bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700 font-bold">
+                    <tfoot v-if="data.length > 0" class="bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700 font-bold text-gray-800 dark:text-white">
                     <tr>
                         <td colspan="5" class="px-6 py-4 text-right">TOTAL VOLUME</td>
-                        <td class="px-6 py-4 text-center text-green-600 bg-green-50 dark:bg-green-900/20">{{ summary.in }}</td>
-                        <td class="px-6 py-4 text-center text-orange-600 bg-orange-50 dark:bg-orange-900/20">{{ summary.out }}</td>
+                        <td class="px-6 py-4 text-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20">{{ summary.in }}</td>
+                        <td class="px-6 py-4 text-center text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20">{{ summary.out }}</td>
                     </tr>
                     </tfoot>
                 </table>

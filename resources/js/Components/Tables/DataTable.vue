@@ -9,9 +9,11 @@ const props = withDefaults(defineProps<{
     filters?: { search?: string; sort?: string; direction?: string };
     pagination?: any;
     enableActions?: boolean;
+    enableSearch?: boolean;
     searchInfo?: string;
 }>(), {
-    enableActions: true
+    enableActions: true,
+    enableSearch: true
 });
 
 const search = ref(props.filters?.search || '');
@@ -70,17 +72,18 @@ const refreshTable = (params: object) => {
         class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
     >
         <div
+            v-if="enableSearch || $slots.actions || $slots.filters"
             class="flex flex-col items-center justify-between gap-4 border-b border-gray-200 px-5 py-4 sm:flex-row dark:border-gray-700"
         >
             <div
-                class="flex flex-col items-center justify-between gap-4 sm:flex-row"
+                class="flex flex-col items-center justify-between gap-4 sm:flex-row w-full"
             >
-                <div class="relative w-full sm:w-72">
+                <div v-if="enableSearch" class="relative w-full sm:w-72">
                     <input
                         v-model="search"
                         type="text"
                         :placeholder="searchInfo ?? 'Search data...'"
-                        class="focus:border-brand-500 focus:ring-brand-500/20 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pr-4 pl-10 text-sm dark:border-gray-700 dark:bg-gray-900"
+                        class="focus:border-brand-500 focus:ring-brand-500/20 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pr-4 pl-10 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white placeholder:text-gray-400"
                     />
                     <span
                         class="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
@@ -100,6 +103,7 @@ const refreshTable = (params: object) => {
                         </svg>
                     </span>
                 </div>
+                <div v-else class="w-full"></div>
 
                 <div class="flex gap-2">
                     <slot name="actions" />
@@ -145,16 +149,20 @@ const refreshTable = (params: object) => {
                         <slot name="actions-row" :row="row" />
                     </td>
                 </tr>
-
+                <tr v-if="rows.length === 0">
+                    <td :colspan="columns.length + (enableActions ? 1 : 0)" class="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400 italic">
+                        No data available.
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
 
         <div
-            v-if="pagination && pagination.links.length > 3"
+            v-if="pagination && pagination.links && pagination.links.length > 3"
             class="flex flex-col items-center justify-between gap-3 border-t border-gray-200 px-5 py-4 sm:flex-row dark:border-gray-700"
         >
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-gray-500 dark:text-gray-400">
                 Showing {{ pagination.from }} to {{ pagination.to }} of
                 {{ pagination.total }} entries
             </div>

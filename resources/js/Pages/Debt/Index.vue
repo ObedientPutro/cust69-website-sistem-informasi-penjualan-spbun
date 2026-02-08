@@ -299,7 +299,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
             <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-sm text-gray-500">Pelanggan</span>
-                    <span class="font-bold text-gray-800 dark:text-white">{{ selectedTransaction?.customer?.name }}</span>
+                    <span class="font-bold text-gray-800 dark:text-white">{{ selectedTransaction?.customer?.ship_name }}</span>
                 </div>
                 <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 flex justify-between items-center">
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Tagihan</span>
@@ -332,7 +332,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString('id-ID', { da
                     <strong>Perhatian:</strong> Mengubah jumlah liter akan otomatis menyesuaikan limit kredit pelanggan dan stok produk.
                 </div>
                 <div v-for="(item, index) in editForm.items" :key="index" class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
-                    <div class="flex justify-between text-sm font-bold mb-2">
+                    <div class="flex justify-between text-sm font-bold mb-2 text-gray-800 dark:text-white">
                         <span>{{ products.find(p => p.id == item.product_id)?.name || 'Produk' }}</span>
                     </div>
                     <IntegerInput

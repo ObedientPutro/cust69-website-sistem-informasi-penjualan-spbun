@@ -376,7 +376,7 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
                     <h4 class="font-bold text-gray-800 dark:text-white mb-2">{{ selectedCustomer.ship_name }}</h4>
                     <div class="flex justify-between text-sm mb-1">
                         <span class="text-gray-500">Limit Plafon Saat Ini:</span>
-                        <span class="font-bold">{{ formatRupiah(selectedCustomer.credit_limit) }}</span>
+                        <span class="font-bold text-gray-800 dark:text-white">{{ formatRupiah(selectedCustomer.credit_limit) }}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Hutang Belum Dibayar:</span>
@@ -386,7 +386,7 @@ const formatRupiah = (val: number) => new Intl.NumberFormat('id-ID', { style: 'c
 
                 <form @submit.prevent="submitLimit">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Perubahan</label>
+                        <label class="block text-sm font-medium light:text-black dark:text-gray-400 mb-2">Jenis Perubahan</label>
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 cursor-pointer p-3 border rounded-lg w-full transition hover:bg-green-50" :class="limitForm.type === 'add' ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'border-gray-200'">
                                 <input type="radio" v-model="limitForm.type" value="add" class="text-green-600 focus:ring-green-500">
