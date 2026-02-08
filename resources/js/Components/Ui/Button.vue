@@ -1,13 +1,13 @@
 <script setup lang="ts">
 interface ButtonProps {
     size?: 'sm' | 'md';
-    variant?: 'primary' | 'outline' | 'danger'; // Saya tambah danger
+    variant?: 'primary' | 'outline' | 'danger';
     startIcon?: object;
     endIcon?: object;
     onClick?: () => void;
     className?: string;
     disabled?: boolean;
-    processing?: boolean; // Tambahan props penting
+    processing?: boolean;
 }
 
 const props = withDefaults(defineProps<ButtonProps>(), {

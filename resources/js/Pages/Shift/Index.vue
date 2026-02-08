@@ -185,7 +185,7 @@ const formatNumber = (num: number | string) => {
                      :class="activeShifts[product.id] ? 'border-green-100 bg-green-100/50 dark:border-green-800 dark:bg-green-900/20' : 'border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800'"
                 >
                     <h3 class="font-bold text-lg text-gray-800 dark:text-white">{{ product.name }}</h3>
-                    <Badge :color="activeShifts[product.id] ? 'success' : 'secondary'">
+                    <Badge :color="activeShifts[product.id] ? 'success' : 'light'">
                         {{ activeShifts[product.id] ? 'SHIFT OPEN' : 'CLOSED' }}
                     </Badge>
                 </div>
