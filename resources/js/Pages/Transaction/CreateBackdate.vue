@@ -107,7 +107,7 @@ const paymentMethods = [
 ];
 
 const submitNewCustomer = () => {
-    newCustomerForm.post(route('customers.store'), {
+    newCustomerForm.post(route('customers.save'), {
         preserveScroll: true,
         onSuccess: () => {
             isCustomerModalOpen.value = false;
